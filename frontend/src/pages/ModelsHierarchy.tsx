@@ -13,6 +13,14 @@ import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+// Helper function to get proper file URL (handles both R2 and local files)
+const getFileUrl = (fileUrl: string): string => {
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    return fileUrl;
+  }
+  return `${API_BASE_URL.replace('/api', '')}${fileUrl}`;
+};
+
 interface Season {
   id: number;
   code: string;
@@ -763,7 +771,7 @@ export const ModelsHierarchy = () => {
                           <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                             {(model as any).sketch_url ? (
                               <img
-                                src={`${API_BASE_URL.replace('/api', '')}${(model as any).sketch_url}`}
+                                src={getFileUrl((model as any).sketch_url)}
                                 alt={model.model_number}
                                 className="w-full h-full object-cover"
                               />

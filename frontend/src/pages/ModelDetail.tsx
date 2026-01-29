@@ -11,6 +11,16 @@ import { usePermissionsStore } from '../store/permissionsStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+// Helper function to get proper file URL (handles both R2 and local files)
+const getFileUrl = (fileUrl: string): string => {
+  // If URL is already absolute (starts with http:// or https://), use it as is
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    return fileUrl;
+  }
+  // Otherwise, prepend the API base URL (for local files like /uploads/...)
+  return `${API_BASE_URL.replace('/api', '')}${fileUrl}`;
+};
+
 interface TechnicalFile {
   id: number;
   file_name: string;
@@ -802,7 +812,7 @@ export const ModelDetail = () => {
                     <div key={file.id} className="relative group">
                       <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                         <img
-                          src={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                          src={`${getFileUrl(file.file_url)}`}
                           alt={file.file_name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -813,7 +823,7 @@ export const ModelDetail = () => {
                       </div>
                       <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <a
-                          href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                          href={`${getFileUrl(file.file_url)}`}
                           download
                           className="bg-white p-2 rounded-lg shadow hover:bg-gray-50"
                         >
@@ -877,7 +887,7 @@ export const ModelDetail = () => {
                             <>
                               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                                 <img
-                                  src={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  src={`${getFileUrl(file.file_url)}`}
                                   alt={file.file_name}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
@@ -889,7 +899,7 @@ export const ModelDetail = () => {
                               </div>
                               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <a
-                                  href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  href={`${getFileUrl(file.file_url)}`}
                                   download
                                   className="bg-white p-2 rounded-lg shadow hover:bg-gray-50"
                                 >
@@ -917,7 +927,7 @@ export const ModelDetail = () => {
                               </div>
                               <div className="flex gap-2">
                                 <a
-                                  href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  href={`${getFileUrl(file.file_url)}`}
                                   download
                                   className="inline-flex items-center justify-center px-2 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                                 >
@@ -974,7 +984,7 @@ export const ModelDetail = () => {
                             <>
                               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                                 <img
-                                  src={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  src={`${getFileUrl(file.file_url)}`}
                                   alt={file.file_name}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
@@ -986,7 +996,7 @@ export const ModelDetail = () => {
                               </div>
                               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <a
-                                  href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  href={`${getFileUrl(file.file_url)}`}
                                   download
                                   className="bg-white p-2 rounded-lg shadow hover:bg-gray-50"
                                 >
@@ -1014,7 +1024,7 @@ export const ModelDetail = () => {
                               </div>
                               <div className="flex gap-2">
                                 <a
-                                  href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  href={`${getFileUrl(file.file_url)}`}
                                   download
                                   className="inline-flex items-center justify-center px-2 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                                 >
@@ -1068,7 +1078,7 @@ export const ModelDetail = () => {
                             <>
                               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                                 <img
-                                  src={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  src={`${getFileUrl(file.file_url)}`}
                                   alt={file.file_name}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
@@ -1080,7 +1090,7 @@ export const ModelDetail = () => {
                               </div>
                               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <a
-                                  href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  href={`${getFileUrl(file.file_url)}`}
                                   download
                                   className="bg-white p-2 rounded-lg shadow hover:bg-gray-50"
                                 >
@@ -1108,7 +1118,7 @@ export const ModelDetail = () => {
                               </div>
                               <div className="flex gap-2">
                                 <a
-                                  href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                                  href={`${getFileUrl(file.file_url)}`}
                                   download
                                   className="inline-flex items-center justify-center px-2 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                                 >
@@ -1165,7 +1175,7 @@ export const ModelDetail = () => {
                           </div>
                           <div className="flex gap-2">
                             <a
-                              href={`${API_BASE_URL.replace('/api', '')}${file.file_url}`}
+                              href={`${getFileUrl(file.file_url)}`}
                               download
                               className="inline-flex items-center justify-center px-2 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                             >

@@ -5,6 +5,14 @@ import { ConfirmModal } from './ui/ConfirmModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+// Helper function to get proper file URL (handles both R2 and local files)
+const getFileUrl = (fileUrl: string): string => {
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    return fileUrl;
+  }
+  return `${API_BASE_URL.replace('/api', '')}${fileUrl}`;
+};
+
 interface Comment {
   id: number;
   model_id: number;
@@ -279,7 +287,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
                 {comment.image_url && (
                   <div className="mt-2">
                     <img
-                      src={`${API_BASE_URL.replace('/api', '')}${comment.image_url}`}
+                      src={getFileUrl(comment.image_url)}
                       alt="Comment attachment"
                       className="max-w-md rounded-lg border border-gray-200"
                     />
