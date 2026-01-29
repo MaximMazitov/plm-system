@@ -105,8 +105,8 @@ const ensureTables = async () => {
   }
 };
 
-// Не запускаем ensureTables автоматически - вызываем только при необходимости
-// ensureTables();
+// Запускаем проверку таблиц при старте (ошибки ловятся внутри)
+ensureTables();
 
 pool.on('error', (err: Error) => {
   console.error('Unexpected database error:', err);
