@@ -89,7 +89,8 @@ export const AdminPanel = () => {
       }
 
       const data = await response.json();
-      setReferenceData(data);
+      // API возвращает { success: true, data: {...} }
+      setReferenceData(data.data || data);
     } catch (error) {
       console.error('Error loading reference data:', error);
       toast.error('Не удалось загрузить справочники');
