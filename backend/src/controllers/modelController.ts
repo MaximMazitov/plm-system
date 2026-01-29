@@ -84,12 +84,13 @@ export const createModel = async (req: AuthRequest, res: Response) => {
       data: model,
       message: 'Model created successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
     console.error('Create model error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
+      details: error.message
     });
   } finally {
     client.release();

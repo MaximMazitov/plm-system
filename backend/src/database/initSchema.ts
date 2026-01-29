@@ -20,11 +20,33 @@ export async function initializeSchema() {
 
       // Run migrations for existing schema
       await client.query(`
-        -- Добавляем колонку gender если её нет
+        -- Добавляем колонку gender в collections
         DO $$
         BEGIN
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collections' AND column_name='gender') THEN
             ALTER TABLE collections ADD COLUMN gender VARCHAR(50);
+          END IF;
+        END $$;
+
+        -- Добавляем колонки в models
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='product_group') THEN
+            ALTER TABLE models ADD COLUMN product_group VARCHAR(100);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='prototype_number') THEN
+            ALTER TABLE models ADD COLUMN prototype_number VARCHAR(100);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='brand') THEN
+            ALTER TABLE models ADD COLUMN brand VARCHAR(255);
+          END IF;
+        END $$;
+
+        -- Добавляем колонку sort_order в model_colors
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='model_colors' AND column_name='sort_order') THEN
+            ALTER TABLE model_colors ADD COLUMN sort_order INTEGER DEFAULT 0;
           END IF;
         END $$;
       `);
