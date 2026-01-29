@@ -49,6 +49,9 @@ export async function initializeSchema() {
             ALTER TABLE model_colors ADD COLUMN sort_order INTEGER DEFAULT 0;
           END IF;
         END $$;
+
+        -- Убираем ограничение product_type чтобы разрешить любые значения
+        ALTER TABLE models DROP CONSTRAINT IF EXISTS models_product_type_check;
       `);
       // Seed reference data if empty
       await seedReferenceData(client);
