@@ -35,10 +35,16 @@ export async function uploadToR2(
   folder: string = 'files',
   contentType?: string
 ): Promise<UploadResult> {
+  console.log(`[R2] uploadToR2 called for file: ${originalFilename}, folder: ${folder}`);
+  console.log(`[R2] Buffer size: ${fileBuffer?.length || 0} bytes`);
+
   try {
     // Проверяем настройки
     if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-      console.error('R2 storage not configured - using local storage fallback');
+      console.error('[R2] Storage not configured - missing credentials');
+      console.error(`[R2] R2_ACCOUNT_ID: ${R2_ACCOUNT_ID ? 'present' : 'MISSING'}`);
+      console.error(`[R2] R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID ? 'present' : 'MISSING'}`);
+      console.error(`[R2] R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY ? 'present' : 'MISSING'}`);
       return { success: false, error: 'R2 storage not configured' };
     }
 
@@ -73,7 +79,8 @@ export async function uploadToR2(
       key: key,
     };
   } catch (error: any) {
-    console.error('R2 upload error:', error);
+    console.error('[R2] Upload error:', error.message);
+    console.error('[R2] Full error:', JSON.stringify(error, null, 2));
     return {
       success: false,
       error: error.message || 'Upload failed',
@@ -153,7 +160,14 @@ export function extractKeyFromUrl(url: string): string | null {
  * Проверяет, настроено ли R2 хранилище
  */
 export function isR2Configured(): boolean {
-  return !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
+  const configured = !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
+  console.log(`[R2] isR2Configured check: ${configured}`);
+  console.log(`[R2] R2_ACCOUNT_ID: ${R2_ACCOUNT_ID ? 'SET' : 'NOT SET'}`);
+  console.log(`[R2] R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID ? 'SET' : 'NOT SET'}`);
+  console.log(`[R2] R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET'}`);
+  console.log(`[R2] R2_BUCKET_NAME: ${R2_BUCKET_NAME}`);
+  console.log(`[R2] R2_PUBLIC_URL: ${R2_PUBLIC_URL || 'NOT SET'}`);
+  return configured;
 }
 
 /**

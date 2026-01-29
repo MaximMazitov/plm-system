@@ -77,7 +77,13 @@ export const uploadModelFile = async (req: AuthRequest, res: Response) => {
     let r2_key: string | null = null;
 
     // Пробуем загрузить в R2
+    console.log(`[Upload] Checking R2 configuration...`);
+    console.log(`[Upload] isR2Configured: ${isR2Configured()}`);
+    console.log(`[Upload] Has buffer: ${!!req.file.buffer}`);
+    console.log(`[Upload] Buffer size: ${req.file.buffer?.length || 0}`);
+
     if (isR2Configured() && req.file.buffer) {
+      console.log(`[Upload] Attempting R2 upload...`);
       const uploadResult = await uploadToR2(
         req.file.buffer,
         file_name,
@@ -85,12 +91,15 @@ export const uploadModelFile = async (req: AuthRequest, res: Response) => {
         req.file.mimetype
       );
 
+      console.log(`[Upload] R2 result: ${JSON.stringify(uploadResult)}`);
+
       if (uploadResult.success && uploadResult.url) {
         file_url = uploadResult.url;
         r2_key = uploadResult.key || null;
+        console.log(`[Upload] R2 upload successful: ${file_url}`);
       } else {
         // Fallback to local storage
-        console.log('R2 upload failed, falling back to local storage');
+        console.log(`[Upload] R2 upload failed: ${uploadResult.error}, falling back to local storage`);
         const uploadDir = path.join(__dirname, '../../uploads');
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
