@@ -358,11 +358,12 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
       data: result.rows[0],
       message: 'Model updated successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update model error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
+      details: error.message
     });
   }
 };

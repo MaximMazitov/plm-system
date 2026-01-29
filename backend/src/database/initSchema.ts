@@ -34,6 +34,9 @@ export async function initializeSchema() {
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='product_group') THEN
             ALTER TABLE models ADD COLUMN product_group VARCHAR(100);
           END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='product_group_code') THEN
+            ALTER TABLE models ADD COLUMN product_group_code VARCHAR(50);
+          END IF;
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='prototype_number') THEN
             ALTER TABLE models ADD COLUMN prototype_number VARCHAR(100);
           END IF;
