@@ -76,6 +76,7 @@ export async function initializeSchema() {
         id SERIAL PRIMARY KEY,
         season_id INTEGER REFERENCES seasons(id),
         type VARCHAR(50) NOT NULL CHECK (type IN ('kids', 'men', 'women')),
+        gender VARCHAR(50),
         age_group VARCHAR(100),
         name VARCHAR(255) NOT NULL,
         description TEXT,
@@ -320,6 +321,14 @@ export async function initializeSchema() {
       CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_reference_data_category ON reference_data(category);
+
+      -- Добавляем колонку gender если её нет
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collections' AND column_name='gender') THEN
+          ALTER TABLE collections ADD COLUMN gender VARCHAR(50);
+        END IF;
+      END $$;
     `);
 
     console.log('Database schema created successfully!');
