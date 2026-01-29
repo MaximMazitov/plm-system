@@ -76,11 +76,12 @@ export const createCollection = async (req: AuthRequest, res: Response) => {
       success: true,
       data: result.rows[0]
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create collection error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to create collection'
+      error: 'Failed to create collection',
+      details: error.message
     });
   }
 };
