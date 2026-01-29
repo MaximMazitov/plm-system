@@ -275,7 +275,8 @@ export const Users = () => {
       'buyer': 'bg-purple-100 text-purple-700',
       'designer': 'bg-blue-100 text-blue-700',
       'constructor': 'bg-green-100 text-green-700',
-      'china_office': 'bg-red-100 text-red-700'
+      'china_office': 'bg-red-100 text-red-700',
+      'factory': 'bg-orange-100 text-orange-700'
     };
     return colors[role] || 'bg-gray-100 text-gray-700';
   };
@@ -285,7 +286,8 @@ export const Users = () => {
       'buyer': 'Байер',
       'designer': 'Дизайнер',
       'constructor': 'Конструктор',
-      'china_office': 'China Office'
+      'china_office': 'China Office',
+      'factory': 'Фабрика'
     };
     return labels[role] || role;
   };
@@ -497,6 +499,7 @@ export const Users = () => {
                     <option value="constructor">Конструктор</option>
                     <option value="buyer">Байер</option>
                     <option value="china_office">China Office</option>
+                    <option value="factory">Фабрика</option>
                   </select>
                 </div>
 
