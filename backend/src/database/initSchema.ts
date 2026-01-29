@@ -55,6 +55,20 @@ export async function initializeSchema() {
 
         -- Убираем ограничение product_type чтобы разрешить любые значения
         ALTER TABLE models DROP CONSTRAINT IF EXISTS models_product_type_check;
+
+        -- Создаём таблицу comments если её нет
+        CREATE TABLE IF NOT EXISTS comments (
+          id SERIAL PRIMARY KEY,
+          model_id INTEGER REFERENCES models(id) ON DELETE CASCADE,
+          user_id INTEGER REFERENCES users(id),
+          parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
+          comment_text TEXT NOT NULL,
+          image_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_comments_model ON comments(model_id);
+        CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parent_id);
       `);
       // Seed reference data if empty
       await seedReferenceData(client);
