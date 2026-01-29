@@ -105,8 +105,8 @@ const ensureTables = async () => {
   }
 };
 
-// Run table check on module load
-ensureTables();
+// Не запускаем ensureTables автоматически - вызываем только при необходимости
+// ensureTables();
 
 pool.on('error', (err: Error) => {
   console.error('Unexpected database error:', err);
