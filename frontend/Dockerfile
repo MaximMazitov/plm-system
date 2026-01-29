@@ -3,37 +3,29 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files first (for caching)
 COPY package*.json ./
-
-# Force rebuild by adding timestamp
-RUN echo "Build timestamp: $(date)" > /tmp/build-time.txt
-
-# Install dependencies
 RUN npm ci --legacy-peer-deps
 
-# Copy source code
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Production stage
-FROM node:20-alpine AS runner
+# Production stage - use nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy built files
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Install serve globally
-RUN npm install -g serve
+# Copy nginx config for SPA routing
+RUN echo 'server { \
+    listen 8080; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
-
-# Set port to 8080 (Railway default)
-ENV PORT=8080
-
-# Expose the port
 EXPOSE 8080
 
-# Start command - serve will listen on 0.0.0.0:8080
-CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:8080"]
+CMD ["nginx", "-g", "daemon off;"]
