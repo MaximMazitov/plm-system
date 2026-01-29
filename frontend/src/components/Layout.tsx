@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Home, Package, Users, Cloud } from 'lucide-react';
+import { LogOut, Home, Package, Users } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 interface LayoutProps {
@@ -20,7 +20,6 @@ export const Layout = ({ children }: LayoutProps) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Модели (Иерархия)', href: '/models-hierarchy', icon: Package },
-    { name: 'Хранилище', href: '/storage', icon: Cloud },
     ...(user?.role === 'buyer' ? [{ name: 'Пользователи', href: '/users', icon: Users }] : []),
   ];
 
