@@ -2,14 +2,7 @@ import { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
 
 export async function seedDemoUsers(client: PoolClient) {
-  // Check if demo users already exist
-  const userCount = await client.query("SELECT COUNT(*) FROM users WHERE email IN ('buyer@example.com', 'designer@example.com')");
-  if (parseInt(userCount.rows[0].count) >= 2) {
-    console.log('Demo users already exist');
-    return;
-  }
-
-  console.log('Creating demo users...');
+  console.log('Checking demo users...');
 
   // Hash password "password123"
   const salt = await bcrypt.genSalt(10);
@@ -21,16 +14,28 @@ export async function seedDemoUsers(client: PoolClient) {
     { email: 'constructor@example.com', full_name: 'Demo Constructor', role: 'constructor' },
   ];
 
+  let createdCount = 0;
   for (const user of demoUsers) {
-    await client.query(
-      `INSERT INTO users (email, password_hash, full_name, role, is_active)
-       VALUES ($1, $2, $3, $4, true)
-       ON CONFLICT (email) DO NOTHING`,
-      [user.email, passwordHash, user.full_name, user.role]
-    );
+    // Check if user exists
+    const existing = await client.query('SELECT id FROM users WHERE email = $1', [user.email]);
+    if (existing.rows.length === 0) {
+      await client.query(
+        `INSERT INTO users (email, password_hash, full_name, role, is_active)
+         VALUES ($1, $2, $3, $4, true)`,
+        [user.email, passwordHash, user.full_name, user.role]
+      );
+      console.log(`Created demo user: ${user.email}`);
+      createdCount++;
+    } else {
+      console.log(`Demo user already exists: ${user.email}`);
+    }
   }
 
-  console.log(`Created ${demoUsers.length} demo users`);
+  if (createdCount > 0) {
+    console.log(`Created ${createdCount} new demo users`);
+  } else {
+    console.log('All demo users already exist');
+  }
 }
 
 export async function seedReferenceData(client: PoolClient) {
