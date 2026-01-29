@@ -62,22 +62,13 @@ app.use(cors({
 // Static files for uploads (должно быть после CORS)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Health check
-app.get('/health', async (_req: Request, res: Response) => {
-  try {
-    await pool.query('SELECT 1');
-    res.status(200).json({
-      success: true,
-      message: 'Server is healthy',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Database connection failed',
-      timestamp: new Date().toISOString()
-    });
-  }
+// Health check - простой без БД
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // API Routes
