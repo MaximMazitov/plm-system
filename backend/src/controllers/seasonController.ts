@@ -43,11 +43,12 @@ export const createSeason = async (req: AuthRequest, res: Response) => {
       success: true,
       data: result.rows[0]
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create season error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to create season'
+      error: 'Failed to create season',
+      details: error.message
     });
   }
 };
