@@ -24,6 +24,7 @@ import factoryRoutes from './routes/factories';
 
 // Import database connection
 import pool from './database/connection';
+import { initializeSchema } from './database/initSchema';
 
 const app = express();
 const httpServer = createServer(app);
@@ -125,15 +126,23 @@ export { io };
 // Start server
 const PORT = process.env.PORT || 3000;
 
-httpServer.listen(PORT, () => {
-  console.log(`
+// Initialize schema and start server
+initializeSchema()
+  .then(() => {
+    httpServer.listen(PORT, () => {
+      console.log(`
     ╔═══════════════════════════════════════╗
     ║   PLM System Backend Server           ║
     ║   Running on port ${PORT}               ║
     ║   Environment: ${process.env.NODE_ENV || 'development'}           ║
     ╚═══════════════════════════════════════╝
-  `);
-});
+      `);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database:', err);
+    process.exit(1);
+  });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
