@@ -4,21 +4,24 @@ import { AuthRequest } from '../middleware/auth';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { uploadToR2, deleteFromR2, extractKeyFromUrl, isR2Configured } from '../services/r2Storage';
 
-// Configure multer for comment images
-const commentStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/comments');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'comment-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer - use memory storage for R2
+const commentStorage = isR2Configured()
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads/comments');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+      },
+      filename: (_req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'comment-' + uniqueSuffix + path.extname(file.originalname));
+      }
+    });
 
 export const commentUpload = multer({
   storage: commentStorage,
@@ -50,6 +53,7 @@ export const getModelComments = async (req: AuthRequest, res: Response) => {
         c.parent_id,
         c.comment_text,
         c.image_url,
+        c.r2_key,
         c.created_at,
         c.updated_at,
         u.email as username,
@@ -141,14 +145,46 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const imageUrl = imageFile ? `/uploads/comments/${imageFile.filename}` : null;
+    let imageUrl: string | null = null;
+    let r2Key: string | null = null;
+
+    // Handle image upload
+    if (imageFile) {
+      if (isR2Configured() && imageFile.buffer) {
+        // Upload to R2
+        const uploadResult = await uploadToR2(
+          imageFile.buffer,
+          imageFile.originalname,
+          `comments/${modelId}`,
+          imageFile.mimetype
+        );
+
+        if (uploadResult.success && uploadResult.url) {
+          imageUrl = uploadResult.url;
+          r2Key = uploadResult.key || null;
+        } else {
+          // Fallback to local storage
+          const uploadDir = path.join(__dirname, '../../uploads/comments');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          const localFilename = 'comment-' + uniqueSuffix + path.extname(imageFile.originalname);
+          fs.writeFileSync(path.join(uploadDir, localFilename), imageFile.buffer);
+          imageUrl = `/uploads/comments/${localFilename}`;
+        }
+      } else if (imageFile.filename) {
+        // Local storage (diskStorage)
+        imageUrl = `/uploads/comments/${imageFile.filename}`;
+      }
+    }
 
     // Insert comment
     const result = await pool.query(
-      `INSERT INTO comments (model_id, user_id, parent_id, comment_text, image_url)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO comments (model_id, user_id, parent_id, comment_text, image_url, r2_key)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [modelId, userId, parent_id || null, comment_text.trim(), imageUrl]
+      [modelId, userId, parent_id || null, comment_text.trim(), imageUrl, r2Key]
     );
 
     // Get comment with user information
@@ -278,11 +314,21 @@ export const deleteModelComment = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Delete image file if exists
-    if (comment.image_url) {
-      const imagePath = path.join(__dirname, '../../', comment.image_url);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+    // Delete image from R2 or local storage
+    if (comment.r2_key) {
+      await deleteFromR2(comment.r2_key);
+    } else if (comment.image_url) {
+      if (comment.image_url.startsWith('/uploads/')) {
+        const imagePath = path.join(__dirname, '../../', comment.image_url);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      } else {
+        // Try to extract key from URL
+        const key = extractKeyFromUrl(comment.image_url);
+        if (key) {
+          await deleteFromR2(key);
+        }
       }
     }
 

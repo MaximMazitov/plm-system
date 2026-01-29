@@ -5,21 +5,26 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import archiver from 'archiver';
+import https from 'https';
+import http from 'http';
+import { uploadToR2, deleteFromR2, extractKeyFromUrl, isR2Configured } from '../services/r2Storage';
 
-// Настройка multer для загрузки файлов
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Настройка multer - используем memory storage для R2
+const storage = isR2Configured()
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+      },
+      filename: (_req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+      }
+    });
 
 export const upload = multer({
   storage,
@@ -66,15 +71,50 @@ export const uploadModelFile = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const file_url = `/uploads/${req.file.filename}`;
     // Декодируем имя файла, если оно содержит кириллицу
     const file_name = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+    let file_url: string;
+    let r2_key: string | null = null;
+
+    // Пробуем загрузить в R2
+    if (isR2Configured() && req.file.buffer) {
+      const uploadResult = await uploadToR2(
+        req.file.buffer,
+        file_name,
+        `models/${id}/${file_type || 'files'}`,
+        req.file.mimetype
+      );
+
+      if (uploadResult.success && uploadResult.url) {
+        file_url = uploadResult.url;
+        r2_key = uploadResult.key || null;
+      } else {
+        // Fallback to local storage
+        console.log('R2 upload failed, falling back to local storage');
+        const uploadDir = path.join(__dirname, '../../uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const localFilename = uniqueSuffix + path.extname(file_name);
+        fs.writeFileSync(path.join(uploadDir, localFilename), req.file.buffer);
+        file_url = `/uploads/${localFilename}`;
+      }
+    } else if (req.file.filename) {
+      // Local storage (diskStorage)
+      file_url = `/uploads/${req.file.filename}`;
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: 'File upload failed - no file data'
+      });
+    }
 
     const result = await pool.query(
-      `INSERT INTO model_files (model_id, file_name, file_url, file_type)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO model_files (model_id, file_name, file_url, file_type, r2_key)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [id, file_name, file_url, file_type]
+      [id, file_name, file_url, file_type, r2_key]
     );
 
     return res.status(201).json({
@@ -97,7 +137,7 @@ export const deleteModelFile = async (req: AuthRequest, res: Response) => {
 
     // Получаем информацию о файле
     const fileResult = await pool.query(
-      'SELECT file_url FROM model_files WHERE id = $1 AND model_id = $2',
+      'SELECT file_url, r2_key FROM model_files WHERE id = $1 AND model_id = $2',
       [fileId, id]
     );
 
@@ -108,12 +148,22 @@ export const deleteModelFile = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const file_url = fileResult.rows[0].file_url;
-    const filePath = path.join(__dirname, '../../', file_url);
+    const { file_url, r2_key } = fileResult.rows[0];
 
-    // Удаляем файл с диска
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Удаляем файл из R2 или с диска
+    if (r2_key) {
+      await deleteFromR2(r2_key);
+    } else if (file_url.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '../../', file_url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } else {
+      // Пробуем извлечь ключ из URL
+      const key = extractKeyFromUrl(file_url);
+      if (key) {
+        await deleteFromR2(key);
+      }
     }
 
     // Удаляем запись из БД
@@ -131,6 +181,28 @@ export const deleteModelFile = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+// Helper function to download file from URL
+function downloadFile(url: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+    protocol.get(url, (response) => {
+      if (response.statusCode === 301 || response.statusCode === 302) {
+        // Handle redirect
+        const redirectUrl = response.headers.location;
+        if (redirectUrl) {
+          downloadFile(redirectUrl).then(resolve).catch(reject);
+          return;
+        }
+      }
+
+      const chunks: Buffer[] = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => resolve(Buffer.concat(chunks)));
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+}
 
 // Экспортировать все файлы модели в ZIP-архив
 export const exportModelFiles = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -155,7 +227,7 @@ export const exportModelFiles = async (req: AuthRequest, res: Response): Promise
 
     // Получаем все файлы модели
     const filesResult = await pool.query(
-      'SELECT file_name, file_url, file_type FROM model_files WHERE model_id = $1',
+      'SELECT file_name, file_url, file_type, r2_key FROM model_files WHERE model_id = $1',
       [id]
     );
 
@@ -192,11 +264,22 @@ export const exportModelFiles = async (req: AuthRequest, res: Response): Promise
 
     // Добавляем файлы в архив
     for (const file of filesResult.rows) {
-      const filePath = path.join(__dirname, '../../', file.file_url);
+      const folderName = fileTypeMap[file.file_type] || 'Other';
 
-      if (fs.existsSync(filePath)) {
-        const folderName = fileTypeMap[file.file_type] || 'Other';
-        archive.file(filePath, { name: `${folderName}/${file.file_name}` });
+      if (file.file_url.startsWith('/uploads/')) {
+        // Локальный файл
+        const filePath = path.join(__dirname, '../../', file.file_url);
+        if (fs.existsSync(filePath)) {
+          archive.file(filePath, { name: `${folderName}/${file.file_name}` });
+        }
+      } else {
+        // Файл в R2 - загружаем и добавляем
+        try {
+          const fileBuffer = await downloadFile(file.file_url);
+          archive.append(fileBuffer, { name: `${folderName}/${file.file_name}` });
+        } catch (downloadError) {
+          console.error(`Failed to download file ${file.file_name}:`, downloadError);
+        }
       }
     }
 

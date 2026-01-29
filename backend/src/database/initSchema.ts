@@ -64,11 +64,41 @@ export async function initializeSchema() {
           parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
           comment_text TEXT NOT NULL,
           image_url TEXT,
+          r2_key TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         CREATE INDEX IF NOT EXISTS idx_comments_model ON comments(model_id);
         CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parent_id);
+
+        -- Создаём таблицу model_files если её нет
+        CREATE TABLE IF NOT EXISTS model_files (
+          id SERIAL PRIMARY KEY,
+          model_id INTEGER REFERENCES models(id) ON DELETE CASCADE,
+          file_name VARCHAR(500) NOT NULL,
+          file_url TEXT NOT NULL,
+          file_type VARCHAR(50),
+          r2_key TEXT,
+          uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_model_files_model ON model_files(model_id);
+        CREATE INDEX IF NOT EXISTS idx_model_files_type ON model_files(file_type);
+
+        -- Добавляем колонку r2_key в comments если её нет
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comments' AND column_name='r2_key') THEN
+            ALTER TABLE comments ADD COLUMN r2_key TEXT;
+          END IF;
+        END $$;
+
+        -- Добавляем колонку r2_key в model_files если её нет
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='model_files' AND column_name='r2_key') THEN
+            ALTER TABLE model_files ADD COLUMN r2_key TEXT;
+          END IF;
+        END $$;
       `);
       // Seed reference data if empty
       await seedReferenceData(client);
@@ -371,6 +401,30 @@ export async function initializeSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      -- Файлы модели
+      CREATE TABLE IF NOT EXISTS model_files (
+        id SERIAL PRIMARY KEY,
+        model_id INTEGER REFERENCES models(id) ON DELETE CASCADE,
+        file_name VARCHAR(500) NOT NULL,
+        file_url TEXT NOT NULL,
+        file_type VARCHAR(50),
+        r2_key TEXT,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Комментарии
+      CREATE TABLE IF NOT EXISTS comments (
+        id SERIAL PRIMARY KEY,
+        model_id INTEGER REFERENCES models(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id),
+        parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
+        comment_text TEXT NOT NULL,
+        image_url TEXT,
+        r2_key TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       -- Индексы
       CREATE INDEX IF NOT EXISTS idx_models_status ON models(status);
       CREATE INDEX IF NOT EXISTS idx_models_collection ON models(collection_id);
@@ -378,6 +432,10 @@ export async function initializeSchema() {
       CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_reference_data_category ON reference_data(category);
+      CREATE INDEX IF NOT EXISTS idx_model_files_model ON model_files(model_id);
+      CREATE INDEX IF NOT EXISTS idx_model_files_type ON model_files(file_type);
+      CREATE INDEX IF NOT EXISTS idx_comments_model ON comments(model_id);
+      CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parent_id);
 
       -- Добавляем колонку gender если её нет
       DO $$
