@@ -32,19 +32,48 @@ export const createSeason = async (req: AuthRequest, res: Response) => {
   try {
     const { code, name, year, season_type } = req.body;
 
+    console.log('[Season] Creating season with data:', { code, name, year, season_type });
+
+    // Validate required fields
+    if (!code || !name || !year) {
+      return res.status(400).json({
+        success: false,
+        error: 'Code, name and year are required'
+      });
+    }
+
+    // Validate season_type
+    if (season_type && !['spring_summer', 'autumn_winter'].includes(season_type)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid season_type. Must be "spring_summer" or "autumn_winter"'
+      });
+    }
+
     const result = await pool.query(
       `INSERT INTO seasons (code, name, year, season_type)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [code, name, year, season_type]
+      [code, name, year, season_type || null]
     );
+
+    console.log('[Season] Season created:', result.rows[0]);
 
     return res.status(201).json({
       success: true,
       data: result.rows[0]
     });
   } catch (error: any) {
-    console.error('Create season error:', error);
+    console.error('[Season] Create season error:', error);
+
+    // Check for unique constraint violation
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        error: 'Сезон с таким кодом уже существует'
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: 'Failed to create season',
