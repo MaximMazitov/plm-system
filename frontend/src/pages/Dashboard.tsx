@@ -364,7 +364,7 @@ export const Dashboard = () => {
               >
                 <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm font-medium text-gray-900">
-                  Модели на проверке
+                  Управление моделями
                 </p>
               </button>
 
