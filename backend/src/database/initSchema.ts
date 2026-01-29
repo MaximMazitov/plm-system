@@ -15,7 +15,19 @@ export async function initializeSchema() {
     `);
 
     if (tablesExist.rows[0].exists) {
-      console.log('Database schema already exists');
+      console.log('Database schema already exists, checking for migrations...');
+
+      // Run migrations for existing schema
+      await client.query(`
+        -- Добавляем колонку gender если её нет
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collections' AND column_name='gender') THEN
+            ALTER TABLE collections ADD COLUMN gender VARCHAR(50);
+          END IF;
+        END $$;
+      `);
+      console.log('Migrations completed');
       return;
     }
 
