@@ -20,6 +20,17 @@ export async function initializeSchema() {
 
       // Run migrations for existing schema
       await client.query(`
+        -- Создаём таблицу seasons если её нет
+        CREATE TABLE IF NOT EXISTS seasons (
+          id SERIAL PRIMARY KEY,
+          code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          year INTEGER NOT NULL,
+          season_type VARCHAR(50) CHECK (season_type IN ('spring_summer', 'autumn_winter')),
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
         -- Добавляем колонку gender в collections
         DO $$
         BEGIN
