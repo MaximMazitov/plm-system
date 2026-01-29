@@ -1,5 +1,5 @@
 import pool from './connection';
-import { seedReferenceData } from './seedData';
+import { seedReferenceData, seedDemoUsers } from './seedData';
 
 export async function initializeSchema() {
   const client = await pool.connect();
@@ -505,6 +505,8 @@ export async function initializeSchema() {
       `);
       // Seed reference data if empty
       await seedReferenceData(client);
+      // Seed demo users if empty
+      await seedDemoUsers(client);
       console.log('Migrations completed');
       return;
     }
@@ -890,6 +892,9 @@ export async function initializeSchema() {
 
     // Seed reference data
     await seedReferenceData(client);
+
+    // Seed demo users
+    await seedDemoUsers(client);
 
   } catch (error) {
     console.error('Error creating schema:', error);

@@ -1,4 +1,37 @@
 import { PoolClient } from 'pg';
+import bcrypt from 'bcryptjs';
+
+export async function seedDemoUsers(client: PoolClient) {
+  // Check if demo users already exist
+  const userCount = await client.query("SELECT COUNT(*) FROM users WHERE email IN ('buyer@example.com', 'designer@example.com')");
+  if (parseInt(userCount.rows[0].count) >= 2) {
+    console.log('Demo users already exist');
+    return;
+  }
+
+  console.log('Creating demo users...');
+
+  // Hash password "password123"
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash('password123', salt);
+
+  const demoUsers = [
+    { email: 'buyer@example.com', full_name: 'Admin Buyer', role: 'buyer' },
+    { email: 'designer@example.com', full_name: 'Demo Designer', role: 'designer' },
+    { email: 'constructor@example.com', full_name: 'Demo Constructor', role: 'constructor' },
+  ];
+
+  for (const user of demoUsers) {
+    await client.query(
+      `INSERT INTO users (email, password_hash, full_name, role, is_active)
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (email) DO NOTHING`,
+      [user.email, passwordHash, user.full_name, user.role]
+    );
+  }
+
+  console.log(`Created ${demoUsers.length} demo users`);
+}
 
 export async function seedReferenceData(client: PoolClient) {
   // Check if already seeded
