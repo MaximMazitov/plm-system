@@ -1,5 +1,6 @@
 import pool from './connection';
 import { seedReferenceData, seedDemoUsers } from './seedData';
+import { seedProductGroups } from './seedProductGroups';
 
 export async function initializeSchema() {
   const client = await pool.connect();
@@ -507,6 +508,8 @@ export async function initializeSchema() {
       await seedReferenceData(client);
       // Seed demo users if empty
       await seedDemoUsers(client);
+      // Seed product groups from Excel file
+      await seedProductGroups(client);
       console.log('Migrations completed');
       return;
     }
@@ -895,6 +898,9 @@ export async function initializeSchema() {
 
     // Seed demo users
     await seedDemoUsers(client);
+
+    // Seed product groups from Excel file
+    await seedProductGroups(client);
 
   } catch (error) {
     console.error('Error creating schema:', error);
