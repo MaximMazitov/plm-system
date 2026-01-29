@@ -104,6 +104,7 @@ export const getModels = async (req: AuthRequest, res: Response) => {
       status,
       product_type,
       model_id,
+      search,
       page = 1,
       limit = 20
     } = req.query;
@@ -142,6 +143,14 @@ export const getModels = async (req: AuthRequest, res: Response) => {
     if (product_type) {
       whereConditions.push(`m.product_type = $${paramIndex++}`);
       params.push(product_type);
+    }
+
+    // Search by model_number or model_name
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
+      whereConditions.push(`(m.model_number ILIKE $${paramIndex} OR m.model_name ILIKE $${paramIndex})`);
+      params.push(searchTerm);
+      paramIndex++;
     }
 
     const whereClause = whereConditions.length > 0
