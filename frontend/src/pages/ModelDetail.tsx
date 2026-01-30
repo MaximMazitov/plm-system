@@ -1784,15 +1784,13 @@ export const ModelDetail = () => {
                             placeholder={t('modelDetail.fabricType')}
                             className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
-                          {type !== 'main' && (
-                            <input
-                              type="text"
-                              value={editingMaterial.fabric_weight_gsm}
-                              onChange={(e) => setEditingMaterial({...editingMaterial, fabric_weight_gsm: e.target.value})}
-                              placeholder={t('modelDetail.fabricWeightGsm')}
-                              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            />
-                          )}
+                          <input
+                            type="text"
+                            value={editingMaterial.fabric_weight_gsm}
+                            onChange={(e) => setEditingMaterial({...editingMaterial, fabric_weight_gsm: e.target.value})}
+                            placeholder={t('modelDetail.fabricWeightGsm')}
+                            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
                           <div className="flex gap-2">
                             <button
                               onClick={saveMaterial}
@@ -1819,7 +1817,7 @@ export const ModelDetail = () => {
                                 {material.fabric_type && (
                                   <p className="text-xs text-gray-500 mt-1">{t('modelDetail.fabricType')}: {material.fabric_type}</p>
                                 )}
-                                {type !== 'main' && material.fabric_weight_gsm && (
+                                {material.fabric_weight_gsm && (
                                   <p className="text-xs text-gray-500 mt-1">{t('modelDetail.fabricWeightGsm')}: {material.fabric_weight_gsm}</p>
                                 )}
                               </>
