@@ -26,7 +26,12 @@
     "error": "Ошибка",
     "success": "Успешно",
     "download": "Скачать",
-    "upload": "Загрузить"
+    "upload": "Загрузить",
+    "filters": "Фильтры",
+    "previous": "Назад",
+    "next": "Вперед",
+    "page": "Страница",
+    "of": "из"
   },
   "auth": {
     "login": "Вход",
@@ -167,7 +172,15 @@
     "age": "Возраст",
     "kids": "Детская",
     "men": "Мужская",
-    "women": "Женская"
+    "women": "Женская",
+    "manageClothingModels": "Управление моделями одежды",
+    "status": "Статус",
+    "loadingModels": "Загрузка моделей...",
+    "noModelsFound": "Модели не найдены",
+    "createFirstModel": "Создать первую модель",
+    "collection": "Коллекция",
+    "designer": "Дизайнер",
+    "date": "Дата"
   },
   "modelDetail": {
     "basicInfo": "Основная информация",

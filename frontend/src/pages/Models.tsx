@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
 import { Search, Filter, Plus, Package } from 'lucide-react';
@@ -20,6 +21,7 @@ const getFileUrl = (fileUrl: string): string => {
 };
 
 export const Models = () => {
+  const { t, i18n } = useTranslation();
   const { hasPermission } = usePermissionsStore();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -97,8 +99,8 @@ export const Models = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Модели</h1>
-            <p className="text-gray-600 mt-1">Управление моделями одежды</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('models.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('models.manageClothingModels')}</p>
           </div>
           {hasPermission('can_create_models') && (
             <button
@@ -106,7 +108,7 @@ export const Models = () => {
               onClick={() => navigate('/models-hierarchy?action=create')}
             >
               <Plus className="w-5 h-5" />
-              Создать модель
+              {t('models.createModel')}
             </button>
           )}
         </div>
@@ -116,12 +118,12 @@ export const Models = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
-              <label className="label">Поиск</label>
+              <label className="label">{t('common.search')}</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   className="input flex-1"
-                  placeholder="Номер модели, название..."
+                  placeholder={t('models.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -137,7 +139,7 @@ export const Models = () => {
 
             {/* Status Filter */}
             <div>
-              <label className="label">Статус</label>
+              <label className="label">{t('models.status')}</label>
               <select
                 className="input"
                 value={statusFilter}
@@ -146,13 +148,13 @@ export const Models = () => {
                   setPage(1);
                 }}
               >
-                <option value="all">Все статусы</option>
-                <option value="draft">Draft</option>
-                <option value="under_review">Under Review</option>
-                <option value="approved">Approved</option>
-                <option value="ds">DS / Development Sample</option>
-                <option value="pps">PPS / Pre-Production Sample</option>
-                <option value="in_production">In Production</option>
+                <option value="all">{t('models.allStatuses')}</option>
+                <option value="draft">{t('statuses.draft')}</option>
+                <option value="under_review">{t('statuses.under_review')}</option>
+                <option value="approved">{t('statuses.approved')}</option>
+                <option value="ds">{t('statuses.ds_stage')}</option>
+                <option value="pps">{t('statuses.pps_stage')}</option>
+                <option value="in_production">{t('statuses.in_production')}</option>
               </select>
             </div>
 
@@ -160,7 +162,7 @@ export const Models = () => {
             <div className="flex items-end">
               <button className="btn btn-secondary w-full flex items-center justify-center gap-2">
                 <Filter className="w-5 h-5" />
-                Фильтры
+                {t('common.filters')}
               </button>
             </div>
           </div>
@@ -171,13 +173,13 @@ export const Models = () => {
           {isLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
-              <p className="text-gray-600 mt-4">Загрузка моделей...</p>
+              <p className="text-gray-600 mt-4">{t('models.loadingModels')}</p>
             </div>
           ) : models.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Модели не найдены</p>
+              <p className="text-gray-600">{t('models.noModelsFound')}</p>
               <button className="btn btn-primary mt-4">
-                Создать первую модель
+                {t('models.createFirstModel')}
               </button>
             </div>
           ) : (
@@ -187,25 +189,25 @@ export const Models = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Номер модели
+                        {t('models.modelNumber')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Название
+                        {t('models.modelName')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Коллекция
+                        {t('models.collection')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Тип
+                        {t('models.type')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Статус
+                        {t('models.status')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Дизайнер
+                        {t('models.designer')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Дата
+                        {t('models.date')}
                       </th>
                     </tr>
                   </thead>
@@ -265,7 +267,7 @@ export const Models = () => {
                           {model.designer_name || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(model.date_created).toLocaleDateString('ru-RU')}
+                          {new Date(model.date_created).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')}
                         </td>
                       </tr>
                     ))}
@@ -282,20 +284,20 @@ export const Models = () => {
                       disabled={page === 1}
                       className="btn btn-secondary"
                     >
-                      Назад
+                      {t('common.previous')}
                     </button>
                     <button
                       onClick={() => setPage(page + 1)}
                       disabled={page === totalPages}
                       className="btn btn-secondary"
                     >
-                      Вперед
+                      {t('common.next')}
                     </button>
                   </div>
                   <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm text-gray-700">
-                        Страница <span className="font-medium">{page}</span> из{' '}
+                        {t('common.page')} <span className="font-medium">{page}</span> {t('common.of')}{' '}
                         <span className="font-medium">{totalPages}</span>
                       </p>
                     </div>
@@ -305,14 +307,14 @@ export const Models = () => {
                         disabled={page === 1}
                         className="btn btn-secondary"
                       >
-                        Назад
+                        {t('common.previous')}
                       </button>
                       <button
                         onClick={() => setPage(page + 1)}
                         disabled={page === totalPages}
                         className="btn btn-secondary"
                       >
-                        Вперед
+                        {t('common.next')}
                       </button>
                     </div>
                   </div>

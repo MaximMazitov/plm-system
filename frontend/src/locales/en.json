@@ -26,7 +26,12 @@
     "error": "Error",
     "success": "Success",
     "download": "Download",
-    "upload": "Upload"
+    "upload": "Upload",
+    "filters": "Filters",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of"
   },
   "auth": {
     "login": "Login",
@@ -167,7 +172,15 @@
     "age": "Age",
     "kids": "Kids",
     "men": "Men",
-    "women": "Women"
+    "women": "Women",
+    "manageClothingModels": "Manage clothing models",
+    "status": "Status",
+    "loadingModels": "Loading models...",
+    "noModelsFound": "Models not found",
+    "createFirstModel": "Create first model",
+    "collection": "Collection",
+    "designer": "Designer",
+    "date": "Date"
   },
   "modelDetail": {
     "basicInfo": "Basic Information",
