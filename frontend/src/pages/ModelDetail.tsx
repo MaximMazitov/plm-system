@@ -34,8 +34,7 @@ interface Material {
   id: number;
   material_type: 'main' | 'upper' | 'lining' | 'hood_lining' | 'insulation';
   name: string;
-  color: string;
-  brand: string;
+  fabric_type: string;
 }
 
 interface ModelColor {
@@ -72,7 +71,7 @@ export const ModelDetail = () => {
   const [isEditingProductGroup, setIsEditingProductGroup] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState('');
   const [selectedProductGroupCode, setSelectedProductGroupCode] = useState('');
-  const [editingMaterial, setEditingMaterial] = useState<{ type: string; name: string; color: string; brand: string } | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<{ type: string; name: string; fabric_type: string } | null>(null);
   const [showDeleteFileModal, setShowDeleteFileModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<{ id: number; name: string } | null>(null);
   const [showDeleteMaterialModal, setShowDeleteMaterialModal] = useState(false);
@@ -357,8 +356,7 @@ export const ModelDetail = () => {
         body: JSON.stringify({
           material_type: editingMaterial.type,
           name: editingMaterial.name,
-          color: editingMaterial.color,
-          brand: editingMaterial.brand
+          fabric_type: editingMaterial.fabric_type
         })
       });
 
@@ -1774,25 +1772,16 @@ export const ModelDetail = () => {
                             type="text"
                             value={editingMaterial.name}
                             onChange={(e) => setEditingMaterial({...editingMaterial, name: e.target.value})}
-                            placeholder="Название материала"
+                            placeholder={t('modelDetail.materialName')}
                             className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
-                          <div className="grid grid-cols-2 gap-2">
-                            <input
-                              type="text"
-                              value={editingMaterial.color}
-                              onChange={(e) => setEditingMaterial({...editingMaterial, color: e.target.value})}
-                              placeholder="Цвет"
-                              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            />
-                            <input
-                              type="text"
-                              value={editingMaterial.brand}
-                              onChange={(e) => setEditingMaterial({...editingMaterial, brand: e.target.value})}
-                              placeholder="Бренд"
-                              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            />
-                          </div>
+                          <input
+                            type="text"
+                            value={editingMaterial.fabric_type}
+                            onChange={(e) => setEditingMaterial({...editingMaterial, fabric_type: e.target.value})}
+                            placeholder={t('modelDetail.fabricType')}
+                            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
                           <div className="flex gap-2">
                             <button
                               onClick={saveMaterial}
@@ -1814,14 +1803,14 @@ export const ModelDetail = () => {
                             {material ? (
                               <>
                                 <p className="text-sm font-medium text-gray-900">
-                                  {material.name} <span className="text-gray-500">({material.color})</span>
+                                  {material.name}
                                 </p>
-                                {material.brand && (
-                                  <p className="text-xs text-gray-500 mt-1">Бренд: {material.brand}</p>
+                                {material.fabric_type && (
+                                  <p className="text-xs text-gray-500 mt-1">{t('modelDetail.fabricType')}: {material.fabric_type}</p>
                                 )}
                               </>
                             ) : (
-                              <p className="text-sm text-gray-400">Не указано</p>
+                              <p className="text-sm text-gray-400">{t('modelDetail.notSelected')}</p>
                             )}
                           </div>
                           <div className="flex gap-2">
@@ -1830,12 +1819,11 @@ export const ModelDetail = () => {
                                 onClick={() => setEditingMaterial({
                                   type,
                                   name: material?.name || '',
-                                  color: material?.color || '',
-                                  brand: material?.brand || ''
+                                  fabric_type: material?.fabric_type || ''
                                 })}
                                 className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                               >
-                                {material ? 'Изменить' : 'Добавить'}
+                                {material ? t('common.change') : t('common.add')}
                               </button>
                             )}
                             {material && hasPermission('can_delete_materials') && (
@@ -1843,7 +1831,7 @@ export const ModelDetail = () => {
                                 onClick={() => handleDeleteMaterialClick(material.id, material.name)}
                                 className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
                               >
-                                Удалить
+                                {t('common.delete')}
                               </button>
                             )}
                           </div>

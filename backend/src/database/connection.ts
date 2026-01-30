@@ -50,12 +50,24 @@ const ensureTables = async () => {
       CREATE TABLE IF NOT EXISTS model_materials (
         id SERIAL PRIMARY KEY,
         model_id INTEGER REFERENCES models(id) ON DELETE CASCADE,
-        material_type VARCHAR(50) CHECK (material_type IN ('main', 'upper', 'lining', 'insulation')),
+        material_type VARCHAR(50) CHECK (material_type IN ('main', 'upper', 'lining', 'hood_lining', 'insulation')),
         name VARCHAR(255),
         color VARCHAR(100),
         brand VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+
+    // Update material_type constraint to include hood_lining (for existing databases)
+    await pool.query(`
+      DO $$
+      BEGIN
+        ALTER TABLE model_materials DROP CONSTRAINT IF EXISTS model_materials_material_type_check;
+        ALTER TABLE model_materials ADD CONSTRAINT model_materials_material_type_check
+          CHECK (material_type IN ('main', 'upper', 'lining', 'hood_lining', 'insulation'));
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END $$;
     `);
 
     // Create indexes

@@ -214,6 +214,7 @@
     "materialBrand": "Brand",
     "noMaterials": "No materials",
     "selectMaterialType": "Select material type",
+    "fabricType": "Fabric Type",
     "approval": "Approval",
     "buyerApproval": "Buyer Approval",
     "constructorApproval": "Constructor Approval",
