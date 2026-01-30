@@ -136,7 +136,11 @@ export const ModelDetail = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setProductGroups(data.data);
+        // Sort by label alphabetically
+        const sorted = [...data.data].sort((a, b) =>
+          (a.label || '').localeCompare(b.label || '', 'ru')
+        );
+        setProductGroups(sorted);
       }
     } catch (error) {
       console.error('Failed to load product groups:', error);
