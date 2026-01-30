@@ -39,7 +39,7 @@ const allowedMimeTypes = [
 
 export const commentUpload = multer({
   storage: commentStorage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB for documents
+  limits: { fileSize: 70 * 1024 * 1024 }, // 70MB for large files
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
     const isAllowedExt = allowedImageTypes.test(ext) || allowedDocTypes.test(ext);
