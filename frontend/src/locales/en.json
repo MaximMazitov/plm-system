@@ -43,6 +43,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "models": "Models (Hierarchy)",
+    "manageModels": "Manage Models",
     "users": "Users",
     "admin": "Administration"
   },

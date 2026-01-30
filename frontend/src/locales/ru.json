@@ -43,6 +43,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "models": "Модели (Иерархия)",
+    "manageModels": "Управление моделями",
     "users": "Пользователи",
     "admin": "Администрирование"
   },
