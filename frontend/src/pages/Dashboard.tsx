@@ -343,43 +343,6 @@ export const Dashboard = () => {
           )}
         </Card>
 
-        {/* Quick Actions based on role */}
-        {(user?.role === 'designer' || user?.role === 'buyer' || user?.role === 'constructor') && (
-          <Card title={t('dashboard.quickActions')}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button
-                onClick={() => navigate('/models-hierarchy')}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
-              >
-                <Package className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm font-medium text-gray-900">
-                  {t('dashboard.createModel')}
-                </p>
-              </button>
-
-              <button
-                onClick={() => navigate('/models?status=under_review')}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
-              >
-                <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm font-medium text-gray-900">
-                  {t('dashboard.manageModels')}
-                </p>
-              </button>
-
-              <button
-                onClick={() => navigate('/models?status=approved')}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
-              >
-                <CheckCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm font-medium text-gray-900">
-                  {t('dashboard.approvedModels')}
-                </p>
-              </button>
-            </div>
-          </Card>
-        )}
-
         {/* Admin Panel Access (buyer only) */}
         {user?.role === 'buyer' && (
           <Card title={t('nav.admin')}>
