@@ -103,7 +103,7 @@ export const Models = () => {
           {hasPermission('can_create_models') && (
             <button
               className="btn btn-primary flex items-center gap-2"
-              onClick={() => navigate('/hierarchy?action=create')}
+              onClick={() => navigate('/models-hierarchy?action=create')}
             >
               <Plus className="w-5 h-5" />
               Создать модель
