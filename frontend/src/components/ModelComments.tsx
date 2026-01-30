@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MessageCircle, Send, Image as ImageIcon, X, Edit2, Trash2, Reply, Paperclip, FileSpreadsheet, FileText, File, Download } from 'lucide-react';
 import { Card } from './ui';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -61,6 +62,7 @@ interface ModelCommentsProps {
 }
 
 export const ModelComments = ({ modelId }: ModelCommentsProps) => {
+  const { t } = useTranslation();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<number | null>(null);
@@ -492,7 +494,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
         <div className="flex items-center gap-2 mb-6">
           <MessageCircle className="w-6 h-6 text-primary-600" />
           <h2 className="text-xl font-semibold text-gray-900">
-            Комментарии ({comments.length})
+            {t('comments.title')} ({comments.length})
           </h2>
         </div>
 
@@ -501,7 +503,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Напишите комментарий..."
+          placeholder={t('comments.writeComment')}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
           rows={3}
         />
@@ -557,12 +559,12 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Send className="w-4 h-4" />
-            Отправить
+            {t('comments.send')}
           </button>
 
           <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer flex items-center gap-2">
             <ImageIcon className="w-4 h-4" />
-            Фото
+            {t('comments.photo')}
             <input
               type="file"
               accept="image/*"
@@ -574,7 +576,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
 
           <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer flex items-center gap-2">
             <Paperclip className="w-4 h-4" />
-            Файл
+            {t('comments.file')}
             <input
               type="file"
               accept=".xlsx,.xls,.pdf,.doc,.docx,.csv,.txt"
@@ -586,7 +588,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
 
           {selectedFiles.length > 0 && (
             <span className="text-sm text-gray-500">
-              Выбрано: {selectedFiles.length} файл(ов)
+              {t('comments.selectedFiles')}: {selectedFiles.length} {t('comments.files')}
             </span>
           )}
         </div>
@@ -597,8 +599,8 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
         {comments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p>Пока нет комментариев</p>
-            <p className="text-sm mt-1">Будьте первым, кто оставит комментарий!</p>
+            <p>{t('comments.noComments')}</p>
+            <p className="text-sm mt-1">{t('comments.beFirstToComment')}</p>
           </div>
         ) : (
           comments.map(comment => renderComment(comment))

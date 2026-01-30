@@ -245,7 +245,41 @@
     "deleteColorError": "Не удалось удалить цвет",
     "saveError": "Не удалось сохранить изменения",
     "exportError": "Не удалось экспортировать файлы",
-    "enterPantoneCode": "Введите код Pantone"
+    "enterPantoneCode": "Введите код Pantone",
+    "sizeSpec": "Табель мер (Size Spec)",
+    "fileNotUploaded": "Файл не загружен",
+    "buyer": "Байер",
+    "constructor": "Конструктор",
+    "colors": "Цвета",
+    "noColorsAdded": "Цвета не добавлены",
+    "addColorBtn": "+ Добавить цвет",
+    "change": "Изменить",
+    "deleteFileTitle": "Удалить файл",
+    "deleteFileMessage": "Вы действительно хотите удалить файл",
+    "cannotUndo": "Это действие невозможно отменить."
+  },
+  "approval": {
+    "status": "Статус",
+    "comment": "Комментарий",
+    "changeStatus": "Изменить статус",
+    "approvalStatus": "Статус согласования",
+    "approved": "Согласовано",
+    "approvedWithComments": "Согласовано с комментариями",
+    "notApproved": "Не согласовано",
+    "optionalComment": "Опциональный комментарий...",
+    "saving": "Сохранение...",
+    "updateError": "Не удалось обновить согласование"
+  },
+  "comments": {
+    "title": "Комментарии",
+    "send": "Отправить",
+    "photo": "Фото",
+    "file": "Файл",
+    "selectedFiles": "Выбрано",
+    "files": "файл(ов)",
+    "writeComment": "Напишите комментарий...",
+    "noComments": "Нет комментариев",
+    "beFirstToComment": "Будьте первым, кто оставит комментарий"
   },
   "users": {
     "title": "Управление пользователями",

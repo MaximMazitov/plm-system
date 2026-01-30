@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, X, HelpCircle } from 'lucide-react';
 import type { ApprovalStatus } from '../types';
 
@@ -19,6 +20,7 @@ export const ApprovalCard = ({
   canEdit,
   onUpdate
 }: ApprovalCardProps) => {
+  const { t, i18n } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ApprovalStatus>(status);
   const [newComment, setNewComment] = useState(comment || '');
@@ -45,12 +47,12 @@ export const ApprovalCard = ({
   const getStatusLabel = (approvalStatus: ApprovalStatus) => {
     switch (approvalStatus) {
       case 'approved':
-        return 'Согласовано';
+        return t('approval.approved');
       case 'approved_with_comments':
-        return 'Согласовано с комментариями';
+        return t('approval.approvedWithComments');
       case 'not_approved':
       default:
-        return 'Не согласовано';
+        return t('approval.notApproved');
     }
   };
 
@@ -73,7 +75,7 @@ export const ApprovalCard = ({
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update approval:', error);
-      alert('Не удалось обновить согласование');
+      alert(t('approval.updateError'));
     } finally {
       setIsSaving(false);
     }
@@ -96,14 +98,14 @@ export const ApprovalCard = ({
         <>
           <div className="mb-2">
             <span className="text-sm font-medium text-gray-700">
-              Статус: {getStatusLabel(status)}
+              {t('approval.status')}: {getStatusLabel(status)}
             </span>
           </div>
 
           {comment && (
             <div className="mb-2">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Комментарий:</span> {comment}
+                <span className="font-medium">{t('approval.comment')}:</span> {comment}
               </p>
             </div>
           )}
@@ -111,7 +113,7 @@ export const ApprovalCard = ({
           {approvedAt && status !== 'not_approved' && (
             <div className="mb-3">
               <p className="text-xs text-gray-500">
-                {new Date(approvedAt).toLocaleString('ru-RU')}
+                {new Date(approvedAt).toLocaleString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')}
               </p>
             </div>
           )}
@@ -121,7 +123,7 @@ export const ApprovalCard = ({
               onClick={() => setIsEditing(true)}
               className="w-full px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              Изменить статус
+              {t('approval.changeStatus')}
             </button>
           )}
         </>
@@ -129,7 +131,7 @@ export const ApprovalCard = ({
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Статус согласования
+              {t('approval.approvalStatus')}
             </label>
             <div className="space-y-2">
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
@@ -145,7 +147,7 @@ export const ApprovalCard = ({
                   className="mr-3"
                 />
                 <Check className="w-5 h-5 text-green-600 mr-2" />
-                <span className="text-sm">Согласовано</span>
+                <span className="text-sm">{t('approval.approved')}</span>
               </label>
 
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
@@ -161,7 +163,7 @@ export const ApprovalCard = ({
                   className="mr-3"
                 />
                 <HelpCircle className="w-5 h-5 text-yellow-600 mr-2" />
-                <span className="text-sm">Согласовано с комментариями</span>
+                <span className="text-sm">{t('approval.approvedWithComments')}</span>
               </label>
 
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
@@ -177,21 +179,21 @@ export const ApprovalCard = ({
                   className="mr-3"
                 />
                 <X className="w-5 h-5 text-fuchsia-600 mr-2" />
-                <span className="text-sm">Не согласовано</span>
+                <span className="text-sm">{t('approval.notApproved')}</span>
               </label>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Комментарий
+              {t('approval.comment')}
             </label>
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="Опциональный комментарий..."
+              placeholder={t('approval.optionalComment')}
               disabled={isSaving}
             />
           </div>
@@ -202,14 +204,14 @@ export const ApprovalCard = ({
               disabled={isSaving}
               className="flex-1 px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSaving ? 'Сохранение...' : 'Сохранить'}
+              {isSaving ? t('approval.saving') : t('common.save')}
             </button>
             <button
               onClick={handleCancel}
               disabled={isSaving}
               className="flex-1 px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Отмена
+              {t('common.cancel')}
             </button>
           </div>
         </div>

@@ -1154,7 +1154,7 @@ export const ModelDetail = () => {
                 {/* Табель мер */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-900">Табель мер (Size Spec)</h3>
+                    <h3 className="text-sm font-medium text-gray-900">{t('modelDetail.sizeSpec')}</h3>
                     {hasPermission('can_upload_files') && (
                       <label>
                         <input
@@ -1202,7 +1202,7 @@ export const ModelDetail = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">Файл не загружен</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('modelDetail.fileNotUploaded')}</p>
                   )}
                 </div>
               </div>
@@ -1213,7 +1213,7 @@ export const ModelDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ApprovalCard
                   key={`buyer-${model.id}`}
-                  title="Байер"
+                  title={t('modelDetail.buyer')}
                   status={model.buyer_approval || 'not_approved'}
                   comment={model.buyer_approval_comment || undefined}
                   approvedAt={model.buyer_approved_at}
@@ -1223,7 +1223,7 @@ export const ModelDetail = () => {
 
                 <ApprovalCard
                   key={`constructor-${model.id}`}
-                  title="Конструктор"
+                  title={t('modelDetail.constructor')}
                   status={model.constructor_approval || 'not_approved'}
                   comment={model.constructor_approval_comment || undefined}
                   approvedAt={model.constructor_approved_at}
@@ -1241,7 +1241,7 @@ export const ModelDetail = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('modelDetail.basicInfo')}</h2>
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm text-gray-600">Статус</label>
+                  <label className="text-sm text-gray-600">{t('common.status')}</label>
                   {isEditingStatus ? (
                     <div className="mt-1 space-y-2">
                       <select
@@ -1287,7 +1287,7 @@ export const ModelDetail = () => {
                           }}
                           className="text-xs text-primary-600 hover:text-primary-700"
                         >
-                          Изменить
+                          {t('common.change')}
                         </button>
                       )}
                       {isEditMode && hasPermission('can_edit_model_status') && (
@@ -1604,7 +1604,7 @@ export const ModelDetail = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm text-gray-600">Цвета</label>
+                    <label className="text-sm text-gray-600">{t('modelDetail.colors')}</label>
                     {isEditMode && (
                       <button
                         onClick={() => setIsEditingColors(!isEditingColors)}
@@ -1696,7 +1696,7 @@ export const ModelDetail = () => {
 
                       {/* Add new color form */}
                       <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
-                        <p className="text-sm font-medium text-gray-900">Добавить цвет</p>
+                        <p className="text-sm font-medium text-gray-900">{t('modelDetail.addColor')}</p>
                         <input
                           type="text"
                           value={newColor.pantone_code}
@@ -1722,7 +1722,7 @@ export const ModelDetail = () => {
                           onClick={addColor}
                           className="w-full px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
                         >
-                          + Добавить цвет
+                          {t('modelDetail.addColorBtn')}
                         </button>
                       </div>
                     </div>
@@ -1746,7 +1746,7 @@ export const ModelDetail = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 mt-2">Цвета не добавлены</p>
+                    <p className="text-sm text-gray-500 mt-2">{t('modelDetail.noColorsAdded')}</p>
                   )}
                 </div>
               </div>
@@ -1868,11 +1868,11 @@ export const ModelDetail = () => {
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Удалить файл</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('modelDetail.deleteFileTitle')}</h2>
             </div>
 
             <p className="text-gray-600 mb-6">
-              Вы действительно хотите удалить файл <strong>{fileToDelete.name}</strong>? Это действие невозможно отменить.
+              {t('modelDetail.deleteFileMessage')} <strong>{fileToDelete.name}</strong>? {t('modelDetail.cannotUndo')}
             </p>
 
             <div className="flex gap-3">
@@ -1884,14 +1884,14 @@ export const ModelDetail = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
               >
-                Отмена
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleDeleteFileConfirm}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
               >
-                Удалить
+                {t('common.delete')}
               </button>
             </div>
           </div>

@@ -245,7 +245,41 @@
     "deleteColorError": "Failed to delete color",
     "saveError": "Failed to save changes",
     "exportError": "Failed to export files",
-    "enterPantoneCode": "Enter Pantone code"
+    "enterPantoneCode": "Enter Pantone code",
+    "sizeSpec": "Size Spec",
+    "fileNotUploaded": "File not uploaded",
+    "buyer": "Buyer",
+    "constructor": "Constructor",
+    "colors": "Colors",
+    "noColorsAdded": "No colors added",
+    "addColorBtn": "+ Add Color",
+    "change": "Change",
+    "deleteFileTitle": "Delete File",
+    "deleteFileMessage": "Are you sure you want to delete file",
+    "cannotUndo": "This action cannot be undone."
+  },
+  "approval": {
+    "status": "Status",
+    "comment": "Comment",
+    "changeStatus": "Change Status",
+    "approvalStatus": "Approval Status",
+    "approved": "Approved",
+    "approvedWithComments": "Approved with comments",
+    "notApproved": "Not approved",
+    "optionalComment": "Optional comment...",
+    "saving": "Saving...",
+    "updateError": "Failed to update approval"
+  },
+  "comments": {
+    "title": "Comments",
+    "send": "Send",
+    "photo": "Photo",
+    "file": "File",
+    "selectedFiles": "Selected",
+    "files": "file(s)",
+    "writeComment": "Write a comment...",
+    "noComments": "No comments yet",
+    "beFirstToComment": "Be the first to comment"
   },
   "users": {
     "title": "User Management",
