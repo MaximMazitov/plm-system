@@ -29,7 +29,7 @@ const storage = isR2Configured()
 export const upload = multer({
   storage,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB for large AI/pattern files
+    fileSize: 250 * 1024 * 1024 // 250MB for large AI/pattern files
   }
 });
 
