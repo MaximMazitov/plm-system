@@ -32,7 +32,7 @@ interface TechnicalFile {
 
 interface Material {
   id: number;
-  material_type: 'main' | 'upper' | 'lining' | 'insulation';
+  material_type: 'main' | 'upper' | 'lining' | 'hood_lining' | 'insulation';
   name: string;
   color: string;
   brand: string;
@@ -703,6 +703,7 @@ export const ModelDetail = () => {
       'main': 'modelDetail.mainMaterial',
       'upper': 'modelDetail.upperMaterial',
       'lining': 'modelDetail.liningMaterial',
+      'hood_lining': 'modelDetail.hoodLiningMaterial',
       'insulation': 'modelDetail.insulation'
     };
     return materialKeys[materialType] ? t(materialKeys[materialType]) : materialType;
@@ -1757,7 +1758,7 @@ export const ModelDetail = () => {
             <Card>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Материалы</h2>
               <div className="space-y-3">
-                {['main', 'upper', 'lining', 'insulation'].map((type) => {
+                {['main', 'upper', 'lining', 'hood_lining', 'insulation'].map((type) => {
                   const material = materials.find(m => m.material_type === type);
                   const isEditing = editingMaterial?.type === type;
 

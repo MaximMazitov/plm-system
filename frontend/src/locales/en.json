@@ -206,6 +206,7 @@
     "mainMaterial": "Main Material",
     "upperMaterial": "Upper Material",
     "liningMaterial": "Lining Material",
+    "hoodLiningMaterial": "Hood Lining",
     "insulation": "Insulation",
     "addMaterial": "Add Material",
     "materialName": "Name",

@@ -206,6 +206,7 @@
     "mainMaterial": "Основной материал",
     "upperMaterial": "Материал верха",
     "liningMaterial": "Материал подкладки",
+    "hoodLiningMaterial": "Подкладка капюшона",
     "insulation": "Утеплитель",
     "addMaterial": "Добавить материал",
     "materialName": "Название",
