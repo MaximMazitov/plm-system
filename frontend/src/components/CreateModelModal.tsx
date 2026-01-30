@@ -9,14 +9,22 @@ interface Color {
   color_name: string;
 }
 
+interface Collection {
+  id: number;
+  name: string;
+  season_code: string;
+}
+
 interface CreateModelModalProps {
-  collectionId: string;
-  collectionName: string;
+  isOpen?: boolean;
+  collectionId?: string;
+  collectionName?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export const CreateModelModal = ({
+  isOpen = true,
   collectionId,
   collectionName,
   onClose,
@@ -38,12 +46,34 @@ export const CreateModelModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
   const [useCustomCategory, setUseCustomCategory] = useState(false);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(collectionId || '');
 
   const userRole = localStorage.getItem('role');
 
   useEffect(() => {
-    loadReferenceData();
-  }, []);
+    if (isOpen) {
+      loadReferenceData();
+      if (!collectionId) {
+        loadCollections();
+      }
+    }
+  }, [isOpen, collectionId]);
+
+  const loadCollections = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/collections`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCollections(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load collections:', error);
+    }
+  };
 
   const loadReferenceData = async () => {
     try {
@@ -75,7 +105,8 @@ export const CreateModelModal = ({
   };
 
   const handleSubmit = async () => {
-    if (!formData.model_number.trim() || (!formData.category && !customCategory)) {
+    const finalCollectionId = collectionId || selectedCollectionId;
+    if (!formData.model_number.trim() || (!formData.category && !customCategory) || !finalCollectionId) {
       return;
     }
 
@@ -95,7 +126,7 @@ export const CreateModelModal = ({
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          collection_id: parseInt(collectionId),
+          collection_id: parseInt(finalCollectionId),
           model_number: formData.model_number,
           model_name: formData.model_name || null,
           product_type: formData.product_type || null,
@@ -124,8 +155,14 @@ export const CreateModelModal = ({
   };
 
   const isFormValid = () => {
-    return formData.model_number.trim() && (formData.category || customCategory.trim());
+    const hasCollection = collectionId || selectedCollectionId;
+    return formData.model_number.trim() && (formData.category || customCategory.trim()) && hasCollection;
   };
+
+  if (!isOpen) return null;
+
+  const selectedCollection = collections.find(c => c.id.toString() === selectedCollectionId);
+  const displayCollectionName = collectionName || (selectedCollection ? `${selectedCollection.name} (${selectedCollection.season_code})` : '');
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -141,6 +178,30 @@ export const CreateModelModal = ({
         </div>
 
         <div className="space-y-6">
+          {/* Выбор коллекции (если не передана) */}
+          {!collectionId && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Коллекция</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Выберите коллекцию <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedCollectionId}
+                  onChange={(e) => setSelectedCollectionId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">Выберите коллекцию</option>
+                  {collections.map((collection) => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.name} ({collection.season_code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Основная информация */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Основная информация</h3>
@@ -344,9 +405,11 @@ export const CreateModelModal = ({
 
           {/* Информация о коллекции */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">
-              <strong>Коллекция:</strong> {collectionName}
-            </p>
+            {displayCollectionName && (
+              <p className="text-sm text-gray-600">
+                <strong>Коллекция:</strong> {displayCollectionName}
+              </p>
+            )}
             <p className="text-xs text-gray-500 mt-2">
               Модель будет создана со статусом "Черновик". Файлы и материалы можно будет добавить после создания.
             </p>

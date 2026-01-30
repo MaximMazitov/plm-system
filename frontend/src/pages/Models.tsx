@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
+import { CreateModelModal } from '../components/CreateModelModal';
 import { Search, Filter, Plus, Package } from 'lucide-react';
 import { modelsApi } from '../services/api';
 import type { Model, ModelStatus } from '../types';
@@ -29,6 +30,7 @@ export const Models = () => {
   const [statusFilter, setStatusFilter] = useState<ModelStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const limit = 20;
 
   // Читаем статус из URL при загрузке
@@ -101,7 +103,10 @@ export const Models = () => {
             <p className="text-gray-600 mt-1">Управление моделями одежды</p>
           </div>
           {hasPermission('can_create_models') && (
-            <button className="btn btn-primary flex items-center gap-2">
+            <button
+              className="btn btn-primary flex items-center gap-2"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus className="w-5 h-5" />
               Создать модель
             </button>
@@ -319,6 +324,16 @@ export const Models = () => {
           )}
         </Card>
       </div>
+
+      {/* Create Model Modal */}
+      <CreateModelModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          setIsCreateModalOpen(false);
+          loadModels();
+        }}
+      />
     </Layout>
   );
 };
