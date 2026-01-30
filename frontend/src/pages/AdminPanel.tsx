@@ -228,7 +228,7 @@ export const AdminPanel = () => {
   // Factory CRUD operations
   const handleCreateFactory = async () => {
     if (!newFactory.name) {
-      toast.error('Введите название фабрики');
+      toast.error(t('admin.enterFactoryName'));
       return;
     }
 
@@ -253,13 +253,13 @@ export const AdminPanel = () => {
       await loadFactories();
     } catch (error) {
       console.error('Error creating factory:', error);
-      toast.error('Не удалось создать фабрику');
+      toast.error(t('admin.factoryCreateError'));
     }
   };
 
   const handleUpdateFactory = async (factory: Factory) => {
     if (!factory.name) {
-      toast.error('Введите название фабрики');
+      toast.error(t('admin.enterFactoryName'));
       return;
     }
 
@@ -288,7 +288,7 @@ export const AdminPanel = () => {
       await loadFactories();
     } catch (error) {
       console.error('Error updating factory:', error);
-      toast.error('Не удалось обновить фабрику');
+      toast.error(t('admin.factoryUpdateError'));
     }
   };
 
@@ -344,7 +344,7 @@ export const AdminPanel = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Загрузка...</div>
+        <div className="text-gray-600">{t('common.loading')}</div>
       </div>
     );
   }
@@ -354,11 +354,11 @@ export const AdminPanel = () => {
       {/* Модальное окно подтверждения удаления */}
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
-        title={deleteConfirm.type === 'factory' ? 'Удалить фабрику?' : 'Удалить запись?'}
-        message={`Вы уверены, что хотите удалить "${deleteConfirm.name}"?`}
-        note="Это действие нельзя отменить."
-        confirmText="Удалить"
-        cancelText="Отмена"
+        title={deleteConfirm.type === 'factory' ? t('admin.deleteFactory') : t('admin.deleteRecord')}
+        message={`${t('admin.confirmDeleteMessage')} "${deleteConfirm.name}"?`}
+        note={t('admin.cannotUndo')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
@@ -424,7 +424,7 @@ export const AdminPanel = () => {
                 className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Добавить
+                {t('common.add')}
               </button>
             </div>
 
@@ -439,19 +439,19 @@ export const AdminPanel = () => {
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Название *
+                            {t('admin.nameRequired')}
                           </label>
                           <input
                             type="text"
                             value={newFactory.name}
                             onChange={(e) => setNewFactory({ ...newFactory, name: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Название фабрики"
+                            placeholder={t('admin.factoryNamePlaceholder')}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
+                            {t('admin.contactEmail')}
                           </label>
                           <input
                             type="email"
@@ -463,7 +463,7 @@ export const AdminPanel = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Телефон
+                            {t('admin.phone')}
                           </label>
                           <input
                             type="text"
@@ -475,14 +475,14 @@ export const AdminPanel = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Адрес
+                            {t('admin.address')}
                           </label>
                           <input
                             type="text"
                             value={newFactory.address}
                             onChange={(e) => setNewFactory({ ...newFactory, address: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Адрес фабрики"
+                            placeholder={t('admin.addressPlaceholder')}
                           />
                         </div>
                       </div>
@@ -502,7 +502,7 @@ export const AdminPanel = () => {
                           className="inline-flex items-center px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                         >
                           <X className="w-4 h-4 mr-2" />
-                          Отмена
+                          {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -511,7 +511,7 @@ export const AdminPanel = () => {
                   {/* Factories table */}
                   {factories.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
-                      Нет фабрик
+                      {t('admin.noFactories')}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -519,22 +519,22 @@ export const AdminPanel = () => {
                         <thead>
                           <tr className="border-b border-gray-200">
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                              Название
+                              {t('common.name')}
                             </th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                              Email
+                              {t('admin.contactEmail')}
                             </th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                              Телефон
+                              {t('admin.phone')}
                             </th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                              Адрес
+                              {t('admin.address')}
                             </th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                              Статус
+                              {t('common.status')}
                             </th>
                             <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                              Действия
+                              {t('common.actions')}
                             </th>
                           </tr>
                         </thead>
@@ -589,7 +589,7 @@ export const AdminPanel = () => {
                                         ? 'bg-green-100 text-green-700'
                                         : 'bg-gray-100 text-gray-700'
                                     }`}>
-                                      {factory.is_active ? 'Активна' : 'Неактивна'}
+                                      {factory.is_active ? t('admin.active') : t('admin.inactive')}
                                     </span>
                                   </td>
                                   <td className="py-3 px-4 text-right">
@@ -619,7 +619,7 @@ export const AdminPanel = () => {
                                         ? 'bg-green-100 text-green-700'
                                         : 'bg-gray-100 text-gray-700'
                                     }`}>
-                                      {factory.is_active ? 'Активна' : 'Неактивна'}
+                                      {factory.is_active ? t('admin.active') : t('admin.inactive')}
                                     </span>
                                   </td>
                                   <td className="py-3 px-4 text-right">
@@ -657,7 +657,7 @@ export const AdminPanel = () => {
                       <div className="grid grid-cols-3 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Код
+                        {t('admin.code')}
                       </label>
                       <input
                         type="text"
@@ -669,7 +669,7 @@ export const AdminPanel = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Значение (value)
+                        {t('admin.valueField')}
                       </label>
                       <input
                         type="text"
@@ -681,14 +681,14 @@ export const AdminPanel = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Название (label)
+                        {t('admin.labelField')}
                       </label>
                       <input
                         type="text"
                         value={newItem.label}
                         onChange={(e) => setNewItem({ ...newItem, label: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Название продукта"
+                        placeholder="Product name"
                       />
                     </div>
                   </div>
@@ -708,7 +708,7 @@ export const AdminPanel = () => {
                       className="inline-flex items-center px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Отмена
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -717,7 +717,7 @@ export const AdminPanel = () => {
               {/* Items table */}
               {currentItems.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  Нет данных в этой категории
+                  {t('admin.noDataInCategory')}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -725,19 +725,19 @@ export const AdminPanel = () => {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                          Код
+                          {t('common.code')}
                         </th>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                          Значение
+                          {t('common.value')}
                         </th>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                          Название
+                          {t('common.name')}
                         </th>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                          Порядок
+                          {t('common.order')}
                         </th>
                         <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                          Действия
+                          {t('common.actions')}
                         </th>
                       </tr>
                     </thead>
