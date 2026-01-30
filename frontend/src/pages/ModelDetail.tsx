@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Button } from '../components/ui';
 import { ModelComments } from '../components/ModelComments';
@@ -55,6 +56,7 @@ interface Factory {
 }
 
 export const ModelDetail = () => {
+  const { t } = useTranslation();
   const { hasPermission, loadPermissions } = usePermissionsStore();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -299,11 +301,11 @@ export const ModelDetail = () => {
         setIsEditingFactory(false);
       } else {
         console.error('Failed to update factory');
-        alert('Не удалось обновить поставщика');
+        alert(t('modelDetail.updateSupplierError'));
       }
     } catch (error) {
       console.error('Failed to update factory:', error);
-      alert('Ошибка при обновлении поставщика');
+      alert(t('modelDetail.updateSupplierError'));
     } finally {
       setIsSavingFactory(false);
     }
@@ -509,11 +511,11 @@ export const ModelDetail = () => {
         await loadModelData();
         setEditingCategory(false);
       } else {
-        alert('Не удалось обновить категорию');
+        alert(t('modelDetail.updateCategoryError'));
       }
     } catch (error) {
       console.error('Failed to update category:', error);
-      alert('Ошибка при обновлении категории');
+      alert(t('modelDetail.updateCategoryError'));
     }
   };
 
@@ -538,17 +540,17 @@ export const ModelDetail = () => {
         await loadModelData();
         setEditingFitType(false);
       } else {
-        alert('Не удалось обновить тип посадки');
+        alert(t('modelDetail.updateFitTypeError'));
       }
     } catch (error) {
       console.error('Failed to update fit type:', error);
-      alert('Ошибка при обновлении типа посадки');
+      alert(t('modelDetail.updateFitTypeError'));
     }
   };
 
   const addColor = async () => {
     if (!newColor.pantone_code) {
-      alert('Введите код Pantone');
+      alert(t('modelDetail.enterPantoneCode'));
       return;
     }
 
@@ -567,11 +569,11 @@ export const ModelDetail = () => {
         await loadModelData();
         setNewColor({ pantone_code: '', color_name: '', hex_color: '' });
       } else {
-        alert('Не удалось добавить цвет');
+        alert(t('modelDetail.addColorError'));
       }
     } catch (error) {
       console.error('Failed to add color:', error);
-      alert('Ошибка при добавлении цвета');
+      alert(t('modelDetail.addColorError'));
     }
   };
 
@@ -591,11 +593,11 @@ export const ModelDetail = () => {
         await loadModelData();
         setEditingColor(null);
       } else {
-        alert('Не удалось обновить цвет');
+        alert(t('modelDetail.updateColorError'));
       }
     } catch (error) {
       console.error('Failed to update color:', error);
-      alert('Ошибка при обновлении цвета');
+      alert(t('modelDetail.updateColorError'));
     }
   };
 
@@ -614,11 +616,11 @@ export const ModelDetail = () => {
         setShowDeleteColorModal(false);
         setColorToDelete(null);
       } else {
-        alert('Не удалось удалить цвет');
+        alert(t('modelDetail.deleteColorError'));
       }
     } catch (error) {
       console.error('Failed to delete color:', error);
-      alert('Ошибка при удалении цвета');
+      alert(t('modelDetail.deleteColorError'));
     }
   };
 
@@ -681,25 +683,25 @@ export const ModelDetail = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      'draft': 'Draft',
-      'under_review': 'Under Review',
-      'approved': 'Approved',
-      'ds': 'DS / Development Sample',
-      'pps': 'PPS / Pre-Production Sample',
-      'in_production': 'In Production',
+    const statusKeys: Record<string, string> = {
+      'draft': 'statuses.draft',
+      'under_review': 'statuses.under_review',
+      'approved': 'statuses.approved',
+      'ds_stage': 'statuses.ds_stage',
+      'pps_stage': 'statuses.pps_stage',
+      'in_production': 'statuses.in_production',
     };
-    return labels[status] || status;
+    return statusKeys[status] ? t(statusKeys[status]) : status;
   };
 
   const getMaterialTypeLabel = (materialType: string) => {
-    const labels: Record<string, string> = {
-      'main': 'Основной материал',
-      'upper': 'Материал верха',
-      'lining': 'Материал подкладки',
-      'insulation': 'Утеплитель'
+    const materialKeys: Record<string, string> = {
+      'main': 'modelDetail.mainMaterial',
+      'upper': 'modelDetail.upperMaterial',
+      'lining': 'modelDetail.liningMaterial',
+      'insulation': 'modelDetail.insulation'
     };
-    return labels[materialType] || materialType;
+    return materialKeys[materialType] ? t(materialKeys[materialType]) : materialType;
   };
 
   const getFilesByType = (fileType: string) => {
@@ -716,7 +718,7 @@ export const ModelDetail = () => {
       <Layout>
         <div className="text-center py-12">
           <div className="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-gray-600 mt-4">Загрузка...</p>
+          <p className="text-gray-600 mt-4">{t('common.loading')}</p>
         </div>
       </Layout>
     );
@@ -726,9 +728,9 @@ export const ModelDetail = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <p className="text-gray-600">Модель не найдена</p>
+          <p className="text-gray-600">{t('modelDetail.modelNotFound')}</p>
           <Button onClick={() => navigate('/models-hierarchy')} className="mt-4">
-            Вернуться к списку
+            {t('modelDetail.returnToList')}
           </Button>
         </div>
       </Layout>
@@ -746,17 +748,17 @@ export const ModelDetail = () => {
               onClick={() => navigate(-1)}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Назад
+              {t('common.back')}
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{model.model_number}</h1>
-              <p className="text-gray-600 mt-1">{model.model_name || 'Без названия'}</p>
+              <p className="text-gray-600 mt-1">{model.model_name || t('modelDetail.noName')}</p>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExportFiles}>
               <Download className="w-4 h-4 mr-2" />
-              Экспорт
+              {t('common.export')}
             </Button>
             {hasPermission('can_edit_models') && (
               <>
@@ -764,16 +766,16 @@ export const ModelDetail = () => {
                   <>
                     <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
                       <Edit className="w-4 h-4 mr-2" />
-                      Сохранить
+                      {t('common.save')}
                     </Button>
                     <Button variant="outline" onClick={handleCancelEdit}>
-                      Отмена
+                      {t('common.cancel')}
                     </Button>
                   </>
                 ) : (
                   <Button onClick={handleEditMode}>
                     <Edit className="w-4 h-4 mr-2" />
-                    Редактировать
+                    {t('common.edit')}
                   </Button>
                 )}
               </>
@@ -787,7 +789,7 @@ export const ModelDetail = () => {
             {/* Финальный скетч */}
             <Card>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Финальный скетч</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{t('modelDetail.finalSketch')}</h2>
                 {hasPermission('can_upload_files') && (
                   <label>
                     <input
@@ -800,7 +802,7 @@ export const ModelDetail = () => {
                     />
                     <span className={`inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                       <Upload className="w-4 h-4 mr-2" />
-                      Загрузить
+                      {t('common.upload')}
                     </span>
                   </label>
                 )}
@@ -849,7 +851,7 @@ export const ModelDetail = () => {
                 <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
                   <div className="text-center text-gray-400">
                     <ImageIcon className="w-16 h-16 mx-auto mb-2" />
-                    <p>Нет загруженных файлов</p>
+                    <p>{t('modelDetail.noUploadedFiles')}</p>
                   </div>
                 </div>
               )}
@@ -857,7 +859,7 @@ export const ModelDetail = () => {
 
             {/* Техническая документация */}
             <Card>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Техническая документация</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('modelDetail.techDocs')}</h2>
               <div className="space-y-4">
                 {/* Artwork */}
                 <div>
@@ -874,7 +876,7 @@ export const ModelDetail = () => {
                         />
                         <span className={`inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                           <Upload className="w-4 h-4 mr-2" />
-                          Загрузить
+                          {t('common.upload')}
                         </span>
                       </label>
                     )}
@@ -951,7 +953,7 @@ export const ModelDetail = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">Файлы не загружены</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('modelDetail.filesNotUploaded')}</p>
                   )}
                 </div>
 
@@ -971,7 +973,7 @@ export const ModelDetail = () => {
                         />
                         <span className={`inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                           <Upload className="w-4 h-4 mr-2" />
-                          Загрузить
+                          {t('common.upload')}
                         </span>
                       </label>
                     )}
@@ -1048,14 +1050,14 @@ export const ModelDetail = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">Файлы не загружены</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('modelDetail.filesNotUploaded')}</p>
                   )}
                 </div>
 
                 {/* Паттерн */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-900">Паттерн</h3>
+                    <h3 className="text-sm font-medium text-gray-900">{t('modelDetail.pattern') || 'Pattern'}</h3>
                     <label>
                       <input
                         type="file"
@@ -1066,7 +1068,7 @@ export const ModelDetail = () => {
                       />
                       <span className={`inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                         <Upload className="w-4 h-4 mr-2" />
-                        Загрузить
+                        {t('common.upload')}
                       </span>
                     </label>
                   </div>
@@ -1142,7 +1144,7 @@ export const ModelDetail = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">Файлы не загружены</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('modelDetail.filesNotUploaded')}</p>
                   )}
                 </div>
 
@@ -1160,7 +1162,7 @@ export const ModelDetail = () => {
                         />
                         <span className={`inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                           <Upload className="w-4 h-4 mr-2" />
-                          Загрузить
+                          {t('common.upload')}
                         </span>
                       </label>
                     )}
@@ -1233,7 +1235,7 @@ export const ModelDetail = () => {
           <div className="space-y-6">
             {/* Основная информация */}
             <Card>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Основная информация</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('modelDetail.basicInfo')}</h2>
               <div className="space-y-3">
                 <div>
                   <label className="text-sm text-gray-600">Статус</label>
@@ -1256,7 +1258,7 @@ export const ModelDetail = () => {
                           onClick={updateStatus}
                           className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                         >
-                          ✓ Сохранить
+                          ✓ {t('common.save')}
                         </button>
                         <button
                           onClick={() => {
@@ -1265,7 +1267,7 @@ export const ModelDetail = () => {
                           }}
                           className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                         >
-                          ✕ Отмена
+                          ✕ {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1301,7 +1303,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Категория</label>
+                  <label className="text-sm text-gray-600">{t('models.category')}</label>
                   {editingCategory ? (
                     <div className="mt-1 space-y-2">
                       <select
@@ -1309,7 +1311,7 @@ export const ModelDetail = () => {
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="">Выберите категорию</option>
+                        <option value="">{t('modelDetail.selectCategory')}</option>
                         {categories.map((cat) => (
                           <option key={cat.value} value={cat.value}>
                             {cat.label}
@@ -1321,7 +1323,7 @@ export const ModelDetail = () => {
                           onClick={updateCategory}
                           className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                         >
-                          ✓ Сохранить
+                          ✓ {t('common.save')}
                         </button>
                         <button
                           onClick={() => {
@@ -1330,7 +1332,7 @@ export const ModelDetail = () => {
                           }}
                           className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                         >
-                          ✕ Отмена
+                          ✕ {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1353,7 +1355,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Бренд</label>
+                  <label className="text-sm text-gray-600">{t('models.brand')}</label>
                   {isEditMode ? (
                     <div className="mt-1 flex items-center gap-2">
                       <input
@@ -1371,7 +1373,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Номер прототипа</label>
+                  <label className="text-sm text-gray-600">{t('models.prototypeNumber')}</label>
                   {isEditMode ? (
                     <div className="mt-1 flex items-center gap-2">
                       <input
@@ -1389,7 +1391,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Группа товара</label>
+                  <label className="text-sm text-gray-600">{t('models.productGroup')}</label>
                   {isEditingProductGroup ? (
                     <div className="mt-1 space-y-2">
                       <select
@@ -1402,7 +1404,7 @@ export const ModelDetail = () => {
                         }}
                         className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="">Не выбрано</option>
+                        <option value="">{t('modelDetail.notSelected')}</option>
                         {productGroups.map((group) => (
                           <option key={group.value} value={group.value}>
                             {group.label}
@@ -1414,7 +1416,7 @@ export const ModelDetail = () => {
                           onClick={updateProductGroup}
                           className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                         >
-                          ✓ Сохранить
+                          ✓ {t('common.save')}
                         </button>
                         <button
                           onClick={() => {
@@ -1424,7 +1426,7 @@ export const ModelDetail = () => {
                           }}
                           className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                         >
-                          ✕ Отмена
+                          ✕ {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1462,7 +1464,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Код группы товара</label>
+                  <label className="text-sm text-gray-600">{t('models.productGroupCode')}</label>
                   <p className="text-sm font-medium text-gray-900 mt-1">
                     {model.product_group
                       ? (model.product_group_code || productGroups.find(g => g.value === model.product_group)?.code || '—')
@@ -1479,7 +1481,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Тип посадки</label>
+                  <label className="text-sm text-gray-600">{t('models.fitType')}</label>
                   {editingFitType ? (
                     <div className="mt-1 space-y-2">
                       <select
@@ -1487,7 +1489,7 @@ export const ModelDetail = () => {
                         onChange={(e) => setSelectedFitType(e.target.value)}
                         className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="">Выберите тип посадки</option>
+                        <option value="">{t('modelDetail.selectFitType')}</option>
                         {fitTypes.map((fit) => (
                           <option key={fit.value} value={fit.value}>
                             {fit.label}
@@ -1499,7 +1501,7 @@ export const ModelDetail = () => {
                           onClick={updateFitType}
                           className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                         >
-                          ✓ Сохранить
+                          ✓ {t('common.save')}
                         </button>
                         <button
                           onClick={() => {
@@ -1508,7 +1510,7 @@ export const ModelDetail = () => {
                           }}
                           className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                         >
-                          ✕ Отмена
+                          ✕ {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1531,7 +1533,7 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-600">Поставщик</label>
+                  <label className="text-sm text-gray-600">{t('models.supplier')}</label>
                   {isEditingFactory ? (
                     <div className="mt-1 space-y-2">
                       <select
@@ -1539,7 +1541,7 @@ export const ModelDetail = () => {
                         onChange={(e) => setSelectedFactory(e.target.value ? parseInt(e.target.value) : null)}
                         className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="">Не выбрано</option>
+                        <option value="">{t('modelDetail.notSelected')}</option>
                         {factories.map((factory) => (
                           <option key={factory.id} value={factory.id}>
                             {factory.name}
@@ -1562,7 +1564,7 @@ export const ModelDetail = () => {
                           disabled={isSavingFactory}
                           className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          ✕ Отмена
+                          ✕ {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1643,13 +1645,13 @@ export const ModelDetail = () => {
                                   onClick={() => updateColor(color.id, editingColor)}
                                   className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                                 >
-                                  ✓ Сохранить
+                                  ✓ {t('common.save')}
                                 </button>
                                 <button
                                   onClick={() => setEditingColor(null)}
                                   className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                                 >
-                                  ✕ Отмена
+                                  ✕ {t('common.cancel')}
                                 </button>
                               </div>
                             </div>
@@ -1791,13 +1793,13 @@ export const ModelDetail = () => {
                               onClick={saveMaterial}
                               className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                             >
-                              ✓ Сохранить
+                              ✓ {t('common.save')}
                             </button>
                             <button
                               onClick={() => setEditingMaterial(null)}
                               className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                             >
-                              ✕ Отмена
+                              ✕ {t('common.cancel')}
                             </button>
                           </div>
                         </div>

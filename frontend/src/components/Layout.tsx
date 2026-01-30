@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogOut, Home, Package, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 
 interface LayoutProps {
@@ -11,17 +12,28 @@ export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, clearAuth } = useAuthStore();
+  const { t, i18n } = useTranslation();
 
   const handleLogout = () => {
     clearAuth();
     navigate('/login');
   };
 
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    localStorage.setItem('language', lng);
+  };
+
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Модели (Иерархия)', href: '/models-hierarchy', icon: Package },
-    ...(user?.role === 'buyer' ? [{ name: 'Пользователи', href: '/users', icon: Users }] : []),
+    { name: t('nav.dashboard'), href: '/dashboard', icon: Home },
+    { name: t('nav.models'), href: '/models-hierarchy', icon: Package },
+    ...(user?.role === 'buyer' ? [{ name: t('nav.users'), href: '/users', icon: Users }] : []),
   ];
+
+  const getRoleLabel = (role: string | undefined) => {
+    if (!role) return '';
+    return t(`roles.${role}`, role);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -50,7 +62,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
                   return (
                     <Link
-                      key={item.name}
+                      key={item.href}
                       to={item.href}
                       className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                         isActive
@@ -68,9 +80,33 @@ export const Layout = ({ children }: LayoutProps) => {
 
             {/* User menu */}
             <div className="flex items-center gap-4">
+              {/* Language Switcher */}
+              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => changeLanguage('ru')}
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                    i18n.language === 'ru'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  RU
+                </button>
+                <button
+                  onClick={() => changeLanguage('en')}
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                    i18n.language === 'en'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
+
               <div className="text-sm text-right">
                 <p className="font-medium text-gray-900">{user?.full_name}</p>
-                <p className="text-gray-500 text-xs capitalize">{user?.role}</p>
+                <p className="text-gray-500 text-xs capitalize">{getRoleLabel(user?.role)}</p>
               </div>
 
               <button
@@ -78,7 +114,7 @@ export const Layout = ({ children }: LayoutProps) => {
                 className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                Выход
+                {t('auth.logout')}
               </button>
             </div>
           </div>

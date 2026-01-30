@@ -1,6 +1,7 @@
 // Build: 2026-01-28 v4 - Create Season button always visible
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge, Button } from '../components/ui';
 import { ChevronRight, FolderOpen, Package, Plus, Trash2, Edit2 } from 'lucide-react';
@@ -43,6 +44,7 @@ type AgeGroup = '0-2' | '2-7' | '7-14';
 export const ModelsHierarchy = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { user: _user } = useAuthStore();
   const { hasPermission, loadPermissions } = usePermissionsStore();
 
@@ -94,29 +96,29 @@ export const ModelsHierarchy = () => {
       if (!seasonId) {
         // Уровень 1: Загружаем сезоны
         await loadSeasons();
-        setBreadcrumbs(['Сезоны']);
+        setBreadcrumbs([t('models.seasons')]);
       } else if (!collectionType) {
         // Уровень 2: Загружаем типы коллекций
-        setBreadcrumbs(['Сезоны', 'Выбор типа']);
+        setBreadcrumbs([t('models.seasons'), t('models.selectType')]);
       } else if (collectionType === 'kids' && !gender) {
         // Уровень 3: Для детей - выбираем гендер
-        setBreadcrumbs(['Сезоны', 'Детская коллекция', 'Выбор гендера']);
+        setBreadcrumbs([t('models.seasons'), t('models.kidsCollection'), t('models.selectGender')]);
       } else if (collectionType === 'kids' && gender && !ageGroup) {
         // Уровень 4: Для детей - выбираем возраст
-        const genderName = gender === 'boys' ? 'Мальчики' : gender === 'girls' ? 'Девочки' : 'Новорожденные';
-        setBreadcrumbs(['Сезоны', 'Детская коллекция', genderName, 'Выбор возраста']);
+        const genderName = gender === 'boys' ? t('models.boys') : gender === 'girls' ? t('models.girls') : t('models.babies');
+        setBreadcrumbs([t('models.seasons'), t('models.kidsCollection'), genderName, t('models.selectAge')]);
       } else if (!collectionId) {
         // Уровень 5: Загружаем коллекции по фильтрам
         await loadCollections();
-        setBreadcrumbs(['Сезоны', 'Коллекции']);
+        setBreadcrumbs([t('models.seasons'), t('models.collections')]);
       } else {
         // Уровень 6: Загружаем модели коллекции
         await loadModels();
-        setBreadcrumbs(['Сезоны', 'Коллекции', 'Модели']);
+        setBreadcrumbs([t('models.seasons'), t('models.collections'), t('models.title')]);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      toast.error('Ошибка при загрузке данных');
+      toast.error(t('models.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -141,12 +143,12 @@ export const ModelsHierarchy = () => {
       if (data.success) {
         setSeasons(data.data || []);
       } else {
-        toast.error('Не удалось загрузить сезоны');
+        toast.error(t('models.loadSeasonsError'));
         setSeasons([]);
       }
     } catch (error) {
       console.error('loadSeasons: Error occurred:', error);
-      toast.error('Ошибка при загрузке сезонов');
+      toast.error(t('models.loadSeasonsError'));
       setSeasons([]);
     }
   };
@@ -176,28 +178,28 @@ export const ModelsHierarchy = () => {
         setCollections(data.data || []);
       } else {
         console.error('Failed to load collections:', data);
-        toast.error('Не удалось загрузить коллекции');
+        toast.error(t('models.loadCollectionsError'));
         setCollections([]);
       }
     } catch (error) {
       console.error('Error loading collections:', error);
-      toast.error('Ошибка при загрузке коллекций');
+      toast.error(t('models.loadCollectionsError'));
       setCollections([]);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: any; label: string }> = {
-      draft: { variant: 'info', label: 'Draft' },
-      under_review: { variant: 'warning', label: 'Under Review' },
-      approved: { variant: 'success', label: 'Approved' },
-      ds: { variant: 'info', label: 'DS' },
-      pps: { variant: 'warning', label: 'PPS' },
-      in_production: { variant: 'success', label: 'In Production' },
+    const statusMap: Record<string, { variant: any; key: string }> = {
+      draft: { variant: 'info', key: 'statuses.draft' },
+      under_review: { variant: 'warning', key: 'statuses.under_review' },
+      approved: { variant: 'success', key: 'statuses.approved' },
+      ds_stage: { variant: 'info', key: 'statuses.ds_stage' },
+      pps_stage: { variant: 'warning', key: 'statuses.pps_stage' },
+      in_production: { variant: 'success', key: 'statuses.in_production' },
     };
 
-    const config = statusMap[status] || { variant: 'info', label: status };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const config = statusMap[status] || { variant: 'info', key: status };
+    return <Badge variant={config.variant}>{t(config.key)}</Badge>;
   };
 
   const loadModels = async () => {
@@ -238,18 +240,18 @@ export const ModelsHierarchy = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Коллекция успешно удалена');
+        toast.success(t('models.collectionDeleted'));
         setShowDeleteCollectionModal(false);
         setCollectionToDelete(null);
         await loadCollections();
       } else {
-        toast.error(data.error || 'Не удалось удалить коллекцию');
+        toast.error(data.error || t('models.deleteCollectionError'));
         setShowDeleteCollectionModal(false);
         setCollectionToDelete(null);
       }
     } catch (error) {
       console.error('Error deleting collection:', error);
-      toast.error('Произошла ошибка при удалении коллекции');
+      toast.error(t('models.deleteCollectionError'));
       setShowDeleteCollectionModal(false);
       setCollectionToDelete(null);
     }
@@ -280,17 +282,17 @@ export const ModelsHierarchy = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Коллекция успешно обновлена');
+        toast.success(t('models.collectionUpdated'));
         setShowEditCollectionModal(false);
         setCollectionToEdit(null);
         setEditCollectionName('');
         await loadCollections();
       } else {
-        toast.error(data.error || 'Не удалось обновить коллекцию');
+        toast.error(data.error || t('models.updateCollectionError'));
       }
     } catch (error) {
       console.error('Error updating collection:', error);
-      toast.error('Произошла ошибка при обновлении коллекции');
+      toast.error(t('models.updateCollectionError'));
     }
   };
 
@@ -314,18 +316,18 @@ export const ModelsHierarchy = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Модель успешно удалена');
+        toast.success(t('models.modelDeleted'));
         setShowDeleteModelModal(false);
         setModelToDelete(null);
         await loadModels();
       } else {
-        toast.error(data.error || 'Не удалось удалить модель');
+        toast.error(data.error || t('models.deleteModelError'));
         setShowDeleteModelModal(false);
         setModelToDelete(null);
       }
     } catch (error) {
       console.error('Error deleting model:', error);
-      toast.error('Произошла ошибка при удалении модели');
+      toast.error(t('models.deleteModelError'));
       setShowDeleteModelModal(false);
       setModelToDelete(null);
     }
@@ -388,7 +390,7 @@ export const ModelsHierarchy = () => {
         setShowCreateSeasonModal(false);
 
         // Показываем уведомление
-        toast.success('Сезон успешно создан');
+        toast.success(t('models.seasonCreated'));
 
         // Небольшая задержка для отображения toast, затем перезагружаем страницу
         setTimeout(() => {
@@ -396,11 +398,11 @@ export const ModelsHierarchy = () => {
         }, 500);
       } else {
         console.error('Failed to create season:', data);
-        toast.error(data.error || 'Не удалось создать сезон');
+        toast.error(data.error || t('models.createSeasonError'));
       }
     } catch (error) {
       console.error('Failed to create season:', error);
-      toast.error('Произошла ошибка при создании сезона');
+      toast.error(t('models.createSeasonError'));
     }
   };
 
@@ -424,18 +426,18 @@ export const ModelsHierarchy = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success('Сезон успешно удалён');
+        toast.success(t('models.seasonDeleted'));
         setShowDeleteSeasonModal(false);
         setSeasonToDelete(null);
         await loadSeasons();
       } else {
-        toast.error(data.error || 'Не удалось удалить сезон');
+        toast.error(data.error || t('models.deleteSeasonError'));
         setShowDeleteSeasonModal(false);
         setSeasonToDelete(null);
       }
     } catch (error) {
       console.error('Error deleting season:', error);
-      toast.error('Произошла ошибка при удалении сезона');
+      toast.error(t('models.deleteSeasonError'));
       setShowDeleteSeasonModal(false);
       setSeasonToDelete(null);
     }
@@ -448,7 +450,7 @@ export const ModelsHierarchy = () => {
       return (
         <div className="text-center py-12">
           <div className="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-gray-600 mt-4">Загрузка...</p>
+          <p className="text-gray-600 mt-4">{t('common.loading')}</p>
         </div>
       );
     }
@@ -460,7 +462,7 @@ export const ModelsHierarchy = () => {
           <div className="flex justify-end">
             <Button onClick={() => setShowCreateSeasonModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Создать сезон
+              {t('models.createSeason')}
             </Button>
           </div>
 
@@ -468,11 +470,11 @@ export const ModelsHierarchy = () => {
             <Card>
               <div className="text-center py-12">
                 <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Нет сезонов</h3>
-                <p className="text-gray-600 mb-4">Создайте первый сезон для начала работы</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('models.noSeasons')}</h3>
+                <p className="text-gray-600 mb-4">{t('models.createFirstSeason')}</p>
                 <Button onClick={() => setShowCreateSeasonModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Создать сезон
+                  {t('models.createSeason')}
                 </Button>
               </div>
             </Card>
@@ -505,7 +507,7 @@ export const ModelsHierarchy = () => {
                               handleDeleteSeasonClick(season.id, season.name);
                             }}
                             className="p-2 hover:bg-red-50 rounded-lg"
-                            title="Удалить сезон"
+                            title={t('models.deleteSeason')}
                           >
                             <Trash2 className="w-5 h-5 text-red-600" />
                           </button>
@@ -525,9 +527,9 @@ export const ModelsHierarchy = () => {
     // Уровень 2: Выбор типа коллекции
     if (!collectionType) {
       const types = [
-        { value: 'kids', label: 'Детская коллекция', color: 'bg-blue-100 text-blue-600' },
-        { value: 'men', label: 'Мужская коллекция', color: 'bg-purple-100 text-purple-600' },
-        { value: 'women', label: 'Женская коллекция', color: 'bg-pink-100 text-pink-600' },
+        { value: 'kids', label: t('models.kidsCollection'), color: 'bg-blue-100 text-blue-600' },
+        { value: 'men', label: t('models.menCollection'), color: 'bg-purple-100 text-purple-600' },
+        { value: 'women', label: t('models.womenCollection'), color: 'bg-pink-100 text-pink-600' },
       ];
 
       return (
@@ -558,9 +560,9 @@ export const ModelsHierarchy = () => {
     // Уровень 3: Для детей - выбор гендера
     if (collectionType === 'kids' && !gender) {
       const genders = [
-        { value: 'boys', label: 'Мальчики', color: 'bg-blue-100 text-blue-600' },
-        { value: 'girls', label: 'Девочки', color: 'bg-pink-100 text-pink-600' },
-        { value: 'babies', label: 'Новорожденные', color: 'bg-green-100 text-green-600' },
+        { value: 'boys', label: t('models.boys'), color: 'bg-blue-100 text-blue-600' },
+        { value: 'girls', label: t('models.girls'), color: 'bg-pink-100 text-pink-600' },
+        { value: 'babies', label: t('models.babies'), color: 'bg-green-100 text-green-600' },
       ];
 
       return (
@@ -593,15 +595,15 @@ export const ModelsHierarchy = () => {
       // Возрастные группы зависят от гендера
       const agesByGender: Record<Gender, Array<{ value: AgeGroup; label: string; color: string }>> = {
         'boys': [
-          { value: '2-7', label: '2-7 лет', color: 'bg-orange-100 text-orange-600' },
-          { value: '7-14', label: '7-14 лет', color: 'bg-red-100 text-red-600' },
+          { value: '2-7', label: t('models.age27'), color: 'bg-orange-100 text-orange-600' },
+          { value: '7-14', label: t('models.age714'), color: 'bg-red-100 text-red-600' },
         ],
         'girls': [
-          { value: '2-7', label: '2-7 лет', color: 'bg-orange-100 text-orange-600' },
-          { value: '7-14', label: '7-14 лет', color: 'bg-red-100 text-red-600' },
+          { value: '2-7', label: t('models.age27'), color: 'bg-orange-100 text-orange-600' },
+          { value: '7-14', label: t('models.age714'), color: 'bg-red-100 text-red-600' },
         ],
         'babies': [
-          { value: '0-2', label: '0-2 года', color: 'bg-yellow-100 text-yellow-600' },
+          { value: '0-2', label: t('models.age02'), color: 'bg-yellow-100 text-yellow-600' },
         ],
       };
 
@@ -646,7 +648,7 @@ export const ModelsHierarchy = () => {
             <div className="flex justify-end">
               <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Создать коллекцию
+                {t('models.createCollection')}
               </Button>
             </div>
           )}
@@ -676,7 +678,7 @@ export const ModelsHierarchy = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="info">{collection.model_count || 0} моделей</Badge>
+                    <Badge variant="info">{collection.model_count || 0} {t('models.modelsCount')}</Badge>
                     {hasPermission('can_edit_collections') && (
                       <button
                         onClick={(e) => {
@@ -684,7 +686,7 @@ export const ModelsHierarchy = () => {
                           handleEditCollectionClick(collection.id, collection.name);
                         }}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Редактировать коллекцию"
+                        title={t('models.editCollection')}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -696,7 +698,7 @@ export const ModelsHierarchy = () => {
                           handleDeleteCollectionClick(collection.id, collection.name);
                         }}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Удалить коллекцию"
+                        title={t('models.deleteCollection')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -719,7 +721,7 @@ export const ModelsHierarchy = () => {
           <div className="flex justify-end">
             <Button onClick={() => setShowCreateModelModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Создать модель
+              {t('models.createModel')}
             </Button>
           </div>
         )}
@@ -727,7 +729,7 @@ export const ModelsHierarchy = () => {
         {models.length === 0 ? (
           <Card>
             <div className="text-center py-12 text-gray-600">
-              В этой коллекции пока нет моделей
+              {t('models.noModelsInCollection')}
             </div>
           </Card>
         ) : (
@@ -737,23 +739,23 @@ export const ModelsHierarchy = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Номер
+                      {t('models.modelNumber')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Название
+                      {t('models.modelName')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Категория
+                      {t('models.category')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Статус
+                      {t('common.status')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Дата
+                      {t('common.date')}
                     </th>
                     {hasPermission('can_delete_models') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Действия
+                        {t('common.actions')}
                       </th>
                     )}
                   </tr>
@@ -806,7 +808,7 @@ export const ModelsHierarchy = () => {
                               handleDeleteModelClick(model.id, model.model_number);
                             }}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Удалить модель"
+                            title={t('models.deleteModel')}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -828,8 +830,8 @@ export const ModelsHierarchy = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Модели</h1>
-          <p className="text-gray-600 mt-1">Иерархическая навигация по коллекциям</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('models.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('models.hierarchyNavigation')}</p>
         </div>
 
         {/* Breadcrumbs */}
@@ -852,40 +854,40 @@ export const ModelsHierarchy = () => {
       {showCreateSeasonModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Создать сезон</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('models.createSeason')}</h2>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Код сезона
+                  {t('models.seasonCode')}
                 </label>
                 <input
                   type="text"
                   value={newSeason.code}
                   onChange={(e) => setNewSeason({ ...newSeason, code: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Например: SS26, AW26"
+                  placeholder={t('models.seasonCodePlaceholder')}
                   autoFocus
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Название сезона
+                  {t('models.seasonName')}
                 </label>
                 <input
                   type="text"
                   value={newSeason.name}
                   onChange={(e) => setNewSeason({ ...newSeason, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Например: Spring/Summer 2026"
+                  placeholder={t('models.seasonNamePlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Год
+                    {t('models.year')}
                   </label>
                   <input
                     type="number"
@@ -899,15 +901,15 @@ export const ModelsHierarchy = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Тип сезона
+                    {t('models.seasonType')}
                   </label>
                   <select
                     value={newSeason.season_type}
                     onChange={(e) => setNewSeason({ ...newSeason, season_type: e.target.value as 'spring_summer' | 'autumn_winter' })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="spring_summer">SS (Весна/Лето)</option>
-                    <option value="autumn_winter">AW (Осень/Зима)</option>
+                    <option value="spring_summer">{t('models.springSummer')}</option>
+                    <option value="autumn_winter">{t('models.autumnWinter')}</option>
                   </select>
                 </div>
               </div>
@@ -927,7 +929,7 @@ export const ModelsHierarchy = () => {
                 }}
                 className="flex-1"
               >
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={() => {
@@ -937,7 +939,7 @@ export const ModelsHierarchy = () => {
                 disabled={!newSeason.code.trim() || !newSeason.name.trim()}
                 className="flex-1"
               >
-                Создать
+                {t('common.add')}
               </Button>
             </div>
           </div>
@@ -958,28 +960,28 @@ export const ModelsHierarchy = () => {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Создать коллекцию</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('models.createCollection')}</h2>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Название коллекции
+                  {t('models.collectionName')}
                 </label>
                 <input
                   type="text"
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Введите название коллекции"
+                  placeholder={t('models.collectionNamePlaceholder')}
                   autoFocus
                 />
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
-                <p><strong>Сезон:</strong> {seasons.find(s => s.id === parseInt(seasonId!))?.code || '—'}</p>
-                <p><strong>Тип:</strong> {collectionType === 'kids' ? 'Детская' : collectionType === 'men' ? 'Мужская' : 'Женская'}</p>
-                {gender && <p><strong>Гендер:</strong> {gender === 'boys' ? 'Мальчики' : gender === 'girls' ? 'Девочки' : 'Новорожденные'}</p>}
-                {ageGroup && <p><strong>Возраст:</strong> {ageGroup}</p>}
+                <p><strong>{t('models.season')}:</strong> {seasons.find(s => s.id === parseInt(seasonId!))?.code || '—'}</p>
+                <p><strong>{t('models.type')}:</strong> {collectionType === 'kids' ? t('models.kids') : collectionType === 'men' ? t('models.men') : t('models.women')}</p>
+                {gender && <p><strong>{t('models.gender')}:</strong> {gender === 'boys' ? t('models.boys') : gender === 'girls' ? t('models.girls') : t('models.babies')}</p>}
+                {ageGroup && <p><strong>{t('models.age')}:</strong> {ageGroup}</p>}
               </div>
             </div>
 
@@ -992,14 +994,14 @@ export const ModelsHierarchy = () => {
                 }}
                 className="flex-1"
               >
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleCreateCollection}
                 disabled={!newCollectionName.trim()}
                 className="flex-1"
               >
-                Создать
+                {t('common.add')}
               </Button>
             </div>
           </div>
@@ -1023,12 +1025,12 @@ export const ModelsHierarchy = () => {
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Удалить сезон?</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{t('models.deleteSeason')}?</h2>
                 <p className="text-gray-600 mb-2">
-                  Вы уверены, что хотите удалить сезон <strong>"{seasonToDelete.name}"</strong>?
+                  {t('models.deleteSeasonConfirm')} <strong>"{seasonToDelete.name}"</strong>?
                 </p>
                 <p className="text-sm text-gray-500">
-                  Примечание: Сезон можно удалить только если в нём нет коллекций. Сначала удалите все коллекции в этом сезоне.
+                  {t('models.deleteSeasonNote')}
                 </p>
               </div>
             </div>
@@ -1042,14 +1044,14 @@ export const ModelsHierarchy = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
               >
-                Отмена
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteSeasonConfirm()}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
               >
-                Удалить
+                {t('common.delete')}
               </button>
             </div>
           </div>
@@ -1073,12 +1075,12 @@ export const ModelsHierarchy = () => {
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Удалить коллекцию?</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{t('models.deleteCollection')}?</h2>
                 <p className="text-gray-600 mb-2">
-                  Вы уверены, что хотите удалить коллекцию <strong>"{collectionToDelete.name}"</strong>?
+                  {t('models.deleteCollectionConfirm')} <strong>"{collectionToDelete.name}"</strong>?
                 </p>
                 <p className="text-sm text-gray-500">
-                  Примечание: Коллекцию можно удалить только если в ней нет моделей.
+                  {t('models.deleteCollectionNote')}
                 </p>
               </div>
             </div>
@@ -1092,14 +1094,14 @@ export const ModelsHierarchy = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
               >
-                Отмена
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteCollectionConfirm()}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
               >
-                Удалить
+                {t('common.delete')}
               </button>
             </div>
           </div>
@@ -1124,23 +1126,23 @@ export const ModelsHierarchy = () => {
                 <Edit2 className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Редактировать коллекцию</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{t('models.editCollection')}</h2>
                 <p className="text-gray-600 text-sm">
-                  Измените название коллекции
+                  {t('models.editCollectionDesc')}
                 </p>
               </div>
             </div>
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Название коллекции
+                {t('models.collectionName')}
               </label>
               <input
                 type="text"
                 value={editCollectionName}
                 onChange={(e) => setEditCollectionName(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Введите название коллекции"
+                placeholder={t('models.collectionNamePlaceholder')}
                 autoFocus
               />
             </div>
@@ -1155,7 +1157,7 @@ export const ModelsHierarchy = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
               >
-                Отмена
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -1163,7 +1165,7 @@ export const ModelsHierarchy = () => {
                 disabled={!editCollectionName.trim()}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Сохранить
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -1187,11 +1189,11 @@ export const ModelsHierarchy = () => {
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Удалить модель</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('models.deleteModel')}</h2>
             </div>
 
             <p className="text-gray-600 mb-6">
-              Вы действительно хотите удалить модель <strong>{modelToDelete.model_number}</strong>? Это действие невозможно отменить.
+              {t('models.deleteModelConfirm')} <strong>{modelToDelete.model_number}</strong>? {t('models.deleteModelNote')}
             </p>
 
             <div className="flex gap-3">
@@ -1203,14 +1205,14 @@ export const ModelsHierarchy = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
               >
-                Отмена
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteModelConfirm()}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
               >
-                Удалить
+                {t('common.delete')}
               </button>
             </div>
           </div>

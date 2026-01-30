@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Button } from '../components/ui';
 import { UserPlus, Edit, Trash2, X } from 'lucide-react';
@@ -44,6 +45,7 @@ interface UserPermissions {
 }
 
 export const Users = () => {
+  const { t } = useTranslation();
   const { hasPermission } = usePermissionsStore();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -197,11 +199,11 @@ export const Users = () => {
         await loadUsers();
       } else {
         const data = await response.json();
-        alert(data.error || 'Ошибка при сохранении');
+        alert(data.error || t('users.saveError'));
       }
     } catch (error) {
       console.error('Failed to save user:', error);
-      alert('Ошибка при сохранении пользователя');
+      alert(t('users.saveError'));
     }
   };
 
@@ -262,11 +264,11 @@ export const Users = () => {
         await loadUsers();
       } else {
         const data = await response.json();
-        alert(data.error || 'Ошибка при удалении');
+        alert(data.error || t('users.deleteError'));
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Ошибка при удалении пользователя');
+      alert(t('users.deleteError'));
     }
   };
 
@@ -282,21 +284,21 @@ export const Users = () => {
   };
 
   const getRoleLabel = (role: string) => {
-    const labels: Record<string, string> = {
-      'buyer': 'Байер',
-      'designer': 'Дизайнер',
-      'constructor': 'Конструктор',
-      'china_office': 'China Office',
-      'factory': 'Фабрика'
+    const roleKeys: Record<string, string> = {
+      'buyer': 'roles.buyer',
+      'designer': 'roles.designer',
+      'constructor': 'roles.constructor',
+      'china_office': 'roles.china_office',
+      'factory': 'roles.factory'
     };
-    return labels[role] || role;
+    return roleKeys[role] ? t(roleKeys[role]) : role;
   };
 
   return (
     <Layout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Управление пользователями</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('users.title')}</h1>
           {hasPermission('can_create_users') && (
             <Button
               onClick={() => {
@@ -339,17 +341,17 @@ export const Users = () => {
             }}
           >
               <UserPlus className="w-5 h-5 mr-2" />
-              Добавить пользователя
+              {t('users.createUser')}
             </Button>
           )}
         </div>
 
         <Card>
           {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Загрузка...</div>
+            <div className="text-center py-8 text-gray-500">{t('common.loading')}</div>
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <p>Нет пользователей</p>
+              <p>{t('users.noUsers')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -357,22 +359,22 @@ export const Users = () => {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Имя
+                      {t('users.fullName')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Email
+                      {t('auth.email')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Роль
+                      {t('users.role')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Статус
+                      {t('common.status')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Дата создания
+                      {t('common.date')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Действия
+                      {t('common.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -394,7 +396,7 @@ export const Users = () => {
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                           user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                         }`}>
-                          {user.is_active ? 'Активен' : 'Неактивен'}
+                          {user.is_active ? t('users.active') : t('users.inactive')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
@@ -434,7 +436,7 @@ export const Users = () => {
             <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {editingUser ? 'Редактировать пользователя' : 'Новый пользователь'}
+                  {editingUser ? t('users.editUser') : t('users.createUser')}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -462,7 +464,7 @@ export const Users = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Полное имя
+                    {t('users.fullName')}
                   </label>
                   <input
                     type="text"
@@ -475,7 +477,7 @@ export const Users = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {editingUser ? 'Новый пароль (оставьте пустым, чтобы не менять)' : 'Пароль'}
+                    {editingUser ? t('users.passwordHint') : t('auth.password')}
                   </label>
                   <input
                     type="password"
@@ -488,28 +490,28 @@ export const Users = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Роль
+                    {t('users.role')}
                   </label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="designer">Дизайнер</option>
-                    <option value="constructor">Конструктор</option>
-                    <option value="buyer">Байер</option>
-                    <option value="china_office">China Office</option>
-                    <option value="factory">Фабрика</option>
+                    <option value="designer">{t('roles.designer')}</option>
+                    <option value="constructor">{t('roles.constructor')}</option>
+                    <option value="buyer">{t('roles.buyer')}</option>
+                    <option value="china_office">{t('roles.china_office')}</option>
+                    <option value="factory">{t('roles.factory')}</option>
                   </select>
                 </div>
 
                 {/* Permissions Section */}
                 <div className="border-t border-gray-200 pt-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Настройка доступов</h3>
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">{t('users.permissionsSetup')}</h3>
 
                   {/* Dashboard */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Dashboard</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.dashboard')}</p>
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -517,13 +519,13 @@ export const Users = () => {
                         onChange={(e) => setPermissions({ ...permissions, can_view_dashboard: e.target.checked })}
                         className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                       />
-                      <span className="ml-2 text-sm text-gray-700">Просмотр Dashboard</span>
+                      <span className="ml-2 text-sm text-gray-700">{t('permissions.viewDashboard')}</span>
                     </label>
                   </div>
 
                   {/* Models */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Модели</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.modelsSection')}</p>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -532,7 +534,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_models: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр моделей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewModels')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -541,7 +543,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_create_models: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Создание моделей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.createModels')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -550,7 +552,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_models: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Редактирование моделей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editModels')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -559,7 +561,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_delete_models: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Удаление моделей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.deleteModels')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -568,14 +570,14 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_model_status: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Изменение статуса модели</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editModelStatus')}</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Files */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Файлы</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.filesSection')}</p>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -584,7 +586,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_files: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр файлов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewFiles')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -593,7 +595,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_upload_files: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Загрузка файлов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.uploadFiles')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -602,14 +604,14 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_delete_files: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Удаление файлов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.deleteFiles')}</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Materials */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Материалы</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.materialsSection')}</p>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -618,7 +620,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_materials: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр материалов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewMaterials')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -627,7 +629,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_materials: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Редактирование материалов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editMaterials')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -636,14 +638,14 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_delete_materials: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Удаление материалов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.deleteMaterials')}</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Comments */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Комментарии</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.commentsSection')}</p>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -652,7 +654,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_comments: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр комментариев</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewComments')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -661,7 +663,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_create_comments: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Создание комментариев</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.createComments')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -670,7 +672,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_own_comments: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Редактирование своих комментариев</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editOwnComments')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -679,7 +681,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_delete_own_comments: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Удаление своих комментариев</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.deleteOwnComments')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -688,14 +690,14 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_delete_any_comments: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Удаление любых комментариев</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.deleteAnyComments')}</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Collections & Seasons */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Коллекции и Сезоны</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.collectionsSection')} & {t('permissions.seasonsSection')}</p>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -704,7 +706,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_collections: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр коллекций</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewCollections')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -713,7 +715,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_collections: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Редактирование коллекций</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editCollections')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -722,7 +724,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_seasons: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр сезонов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewSeasons')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -731,14 +733,14 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_seasons: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Редактирование сезонов</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editSeasons')}</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Users Management */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Управление пользователями</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('permissions.usersSection')}</p>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -747,7 +749,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_view_users: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Просмотр пользователей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.viewUsers')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -756,7 +758,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_create_users: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Создание пользователей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.createUsers')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -765,7 +767,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_edit_users: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Редактирование пользователей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.editUsers')}</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -774,7 +776,7 @@ export const Users = () => {
                           onChange={(e) => setPermissions({ ...permissions, can_delete_users: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Удаление пользователей</span>
+                        <span className="ml-2 text-sm text-gray-700">{t('permissions.deleteUsers')}</span>
                       </label>
                     </div>
                   </div>
@@ -790,7 +792,7 @@ export const Users = () => {
                       className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                     />
                     <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
-                      Активный пользователь
+                      {t('users.activeUser')}
                     </label>
                   </div>
                 )}
@@ -801,13 +803,13 @@ export const Users = () => {
                     onClick={() => setShowModal(false)}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
                   >
-                    Отмена
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
                     className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
                   >
-                    {editingUser ? 'Сохранить' : 'Создать'}
+                    {editingUser ? t('common.save') : t('users.createUser')}
                   </button>
                 </div>
               </form>
@@ -832,11 +834,11 @@ export const Users = () => {
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                   <Trash2 className="w-6 h-6 text-red-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Удалить пользователя</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('users.deleteUser')}</h2>
               </div>
 
               <p className="text-gray-600 mb-6">
-                Вы действительно хотите удалить пользователя <strong>{userToDelete.full_name}</strong> ({userToDelete.email})? Это действие невозможно отменить.
+                {t('users.deleteUserConfirm')} <strong>{userToDelete.full_name}</strong> ({userToDelete.email})? {t('users.deleteUserNote')}
               </p>
 
               <div className="flex gap-3">
@@ -848,14 +850,14 @@ export const Users = () => {
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
                 >
-                  Отмена
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={handleDeleteConfirm}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
                 >
-                  Удалить
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -879,11 +881,11 @@ export const Users = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <Edit className="w-6 h-6 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Подтвердить изменения</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('users.confirmChanges')}</h2>
               </div>
 
               <p className="text-gray-600 mb-6">
-                Вы действительно хотите сохранить изменения для пользователя <strong>{editingUser.full_name}</strong> ({editingUser.email})?
+                {t('users.confirmChangesMessage')} <strong>{editingUser.full_name}</strong> ({editingUser.email})?
               </p>
 
               <div className="flex gap-3">
@@ -895,14 +897,14 @@ export const Users = () => {
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
                 >
-                  Отмена
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={handleUpdateConfirm}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                 >
-                  Сохранить
+                  {t('common.save')}
                 </button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { ChevronLeft, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -29,17 +30,18 @@ interface ReferenceDataByCategory {
   [key: string]: ReferenceDataItem[];
 }
 
-const categoryLabels: { [key: string]: string } = {
-  product_type: 'Тип продукта',
-  fit_type: 'Тип посадки',
-  product_group: 'Группа товара',
-  color: 'Цвет',
-  size: 'Размер',
-  factories: 'Фабрики'
-};
-
 export const AdminPanel = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const categoryLabels: { [key: string]: string } = {
+    product_type: t('admin.productType'),
+    fit_type: t('admin.fitType'),
+    product_group: t('admin.productGroup'),
+    color: t('admin.color'),
+    size: t('admin.size'),
+    factories: t('admin.factories')
+  };
   const [referenceData, setReferenceData] = useState<ReferenceDataByCategory>({});
   const [factories, setFactories] = useState<Factory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('product_type');
@@ -93,7 +95,7 @@ export const AdminPanel = () => {
       setReferenceData(data.data || data);
     } catch (error) {
       console.error('Error loading reference data:', error);
-      toast.error('Не удалось загрузить справочники');
+      toast.error(t('models.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -116,13 +118,13 @@ export const AdminPanel = () => {
       setFactories(data.data || []);
     } catch (error) {
       console.error('Error loading factories:', error);
-      toast.error('Не удалось загрузить фабрики');
+      toast.error(t('models.loadError'));
     }
   };
 
   const handleCreate = async () => {
     if (!newItem.code || !newItem.value || !newItem.label) {
-      toast.error('Заполните все поля');
+      toast.error(t('common.error'));
       return;
     }
 
@@ -145,19 +147,19 @@ export const AdminPanel = () => {
         throw new Error('Failed to create reference data');
       }
 
-      toast.success('Запись успешно создана');
+      toast.success(t('admin.recordCreated'));
       setIsCreating(false);
       setNewItem({ code: '', value: '', label: '' });
       await loadReferenceData();
     } catch (error) {
       console.error('Error creating reference data:', error);
-      toast.error('Не удалось создать запись');
+      toast.error(t('common.error'));
     }
   };
 
   const handleUpdate = async (item: ReferenceDataItem) => {
     if (!item.code || !item.value || !item.label) {
-      toast.error('Заполните все поля');
+      toast.error(t('common.error'));
       return;
     }
 
@@ -181,12 +183,12 @@ export const AdminPanel = () => {
         throw new Error('Failed to update reference data');
       }
 
-      toast.success('Запись успешно обновлена');
+      toast.success(t('admin.recordUpdated'));
       setEditingItem(null);
       await loadReferenceData();
     } catch (error) {
       console.error('Error updating reference data:', error);
-      toast.error('Не удалось обновить запись');
+      toast.error(t('common.error'));
     }
   };
 
@@ -215,11 +217,11 @@ export const AdminPanel = () => {
         throw new Error('Failed to delete reference data');
       }
 
-      toast.success('Запись успешно удалена');
+      toast.success(t('admin.recordDeleted'));
       await loadReferenceData();
     } catch (error) {
       console.error('Error deleting reference data:', error);
-      toast.error('Не удалось удалить запись');
+      toast.error(t('common.error'));
     } finally {
       setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' });
     }
@@ -247,7 +249,7 @@ export const AdminPanel = () => {
         throw new Error('Failed to create factory');
       }
 
-      toast.success('Фабрика успешно создана');
+      toast.success(t('admin.recordCreated'));
       setIsCreating(false);
       setNewFactory({ name: '', contact_email: '', contact_phone: '', address: '' });
       await loadFactories();
@@ -283,7 +285,7 @@ export const AdminPanel = () => {
         throw new Error('Failed to update factory');
       }
 
-      toast.success('Фабрика успешно обновлена');
+      toast.success(t('admin.recordUpdated'));
       setEditingFactory(null);
       await loadFactories();
     } catch (error) {
@@ -317,11 +319,11 @@ export const AdminPanel = () => {
         throw new Error('Failed to delete factory');
       }
 
-      toast.success('Фабрика успешно удалена');
+      toast.success(t('admin.recordDeleted'));
       await loadFactories();
     } catch (error) {
       console.error('Error deleting factory:', error);
-      toast.error('Не удалось удалить фабрику');
+      toast.error(t('common.error'));
     } finally {
       setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' });
     }
@@ -374,16 +376,16 @@ export const AdminPanel = () => {
                 className="inline-flex items-center px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 <ChevronLeft className="w-4 h-4 mr-2" />
-                Назад
+                {t('common.back')}
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Управление справочниками</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t('admin.title')}</h1>
             </div>
           </div>
 
         <div className="grid grid-cols-12 gap-6">
           {/* Categories sidebar */}
           <div className="col-span-3 bg-white rounded-lg shadow p-4">
-            <h2 className="font-semibold text-gray-900 mb-4">Категории</h2>
+            <h2 className="font-semibold text-gray-900 mb-4">{t('admin.categories')}</h2>
             <div className="space-y-1">
               {Object.keys(categoryLabels).map((category) => (
                 <button
@@ -435,7 +437,7 @@ export const AdminPanel = () => {
                   {/* Create factory form */}
                   {isCreating && (
                     <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <h3 className="font-semibold text-gray-900 mb-4">Новая фабрика</h3>
+                      <h3 className="font-semibold text-gray-900 mb-4">{t('admin.newFactory')}</h3>
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -492,7 +494,7 @@ export const AdminPanel = () => {
                           className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
                           <Save className="w-4 h-4 mr-2" />
-                          Сохранить
+                          {t('common.save')}
                         </button>
                         <button
                           onClick={() => {
@@ -653,7 +655,7 @@ export const AdminPanel = () => {
                   {/* Create form */}
                   {isCreating && (
                     <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <h3 className="font-semibold text-gray-900 mb-4">Новая запись</h3>
+                      <h3 className="font-semibold text-gray-900 mb-4">{t('admin.newRecord')}</h3>
                       <div className="grid grid-cols-3 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -698,7 +700,7 @@ export const AdminPanel = () => {
                       className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      Сохранить
+                      {t('common.save')}
                     </button>
                     <button
                       onClick={() => {

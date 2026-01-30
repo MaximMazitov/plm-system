@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
 import { Package, Clock, CheckCircle, TrendingUp, Settings, Check, X, HelpCircle } from 'lucide-react';
@@ -28,6 +29,7 @@ interface Stats {
 }
 
 export const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
@@ -116,7 +118,7 @@ export const Dashboard = () => {
 
   const statCards = [
     {
-      title: 'Всего моделей',
+      title: t('dashboard.totalModels'),
       value: stats.total,
       icon: Package,
       color: 'text-blue-600',
@@ -124,7 +126,7 @@ export const Dashboard = () => {
       status: null,
     },
     {
-      title: 'Draft',
+      title: t('statuses.draft'),
       value: stats.draft,
       icon: Clock,
       color: 'text-gray-600',
@@ -132,7 +134,7 @@ export const Dashboard = () => {
       status: 'draft',
     },
     {
-      title: 'Under Review',
+      title: t('statuses.under_review'),
       value: stats.under_review,
       icon: Clock,
       color: 'text-yellow-600',
@@ -140,7 +142,7 @@ export const Dashboard = () => {
       status: 'under_review',
     },
     {
-      title: 'Approved',
+      title: t('statuses.approved'),
       value: stats.approved,
       icon: CheckCircle,
       color: 'text-green-600',
@@ -148,7 +150,7 @@ export const Dashboard = () => {
       status: 'approved',
     },
     {
-      title: 'DS',
+      title: t('statuses.ds_stage'),
       value: stats.ds,
       icon: Settings,
       color: 'text-blue-600',
@@ -156,7 +158,7 @@ export const Dashboard = () => {
       status: 'ds',
     },
     {
-      title: 'PPS',
+      title: t('statuses.pps_stage'),
       value: stats.pps,
       icon: Settings,
       color: 'text-orange-600',
@@ -164,7 +166,7 @@ export const Dashboard = () => {
       status: 'pps',
     },
     {
-      title: 'In Production',
+      title: t('statuses.in_production'),
       value: stats.in_production,
       icon: TrendingUp,
       color: 'text-purple-600',
@@ -175,12 +177,12 @@ export const Dashboard = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: any; label: string }> = {
-      draft: { variant: 'info', label: 'Draft' },
-      under_review: { variant: 'warning', label: 'Under Review' },
-      approved: { variant: 'success', label: 'Approved' },
-      ds: { variant: 'info', label: 'DS' },
-      pps: { variant: 'warning', label: 'PPS' },
-      in_production: { variant: 'success', label: 'In Production' },
+      draft: { variant: 'info', label: t('statuses.draft') },
+      under_review: { variant: 'warning', label: t('statuses.under_review') },
+      approved: { variant: 'success', label: t('statuses.approved') },
+      ds: { variant: 'info', label: t('statuses.ds_stage') },
+      pps: { variant: 'warning', label: t('statuses.pps_stage') },
+      in_production: { variant: 'success', label: t('statuses.in_production') },
     };
 
     const config = statusMap[status] || { variant: 'info', label: status };
@@ -206,10 +208,10 @@ export const Dashboard = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Добро пожаловать, {user?.full_name}!
+            {t('auth.welcomeBack')}, {user?.full_name}!
           </h1>
           <p className="text-gray-600 mt-1">
-            Вот общая статистика по вашим проектам
+            {t('dashboard.title')}
           </p>
         </div>
 
@@ -246,22 +248,19 @@ export const Dashboard = () => {
         <Card
           title={
             selectedStatus
-              ? `Модели (${
+              ? `${t('models.title')} (${
                   statCards.find((s) => s.status === selectedStatus)?.title ||
-                  'Фильтр'
+                  t('common.filter')
                 })`
-              : 'Последние модели'
+              : t('dashboard.recentModels')
           }
         >
           {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Загрузка...</div>
+            <div className="text-center py-8 text-gray-500">{t('common.loading')}</div>
           ) : recentModels.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p>Модели еще не созданы</p>
-              <p className="text-sm mt-2">
-                Создайте первую модель, чтобы начать работу
-              </p>
+              <p>{t('dashboard.noRecentModels')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -269,22 +268,22 @@ export const Dashboard = () => {
                 <thead>
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Модель
+                      {t('models.title')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Коллекция
+                      {t('models.collections')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Статус
+                      {t('common.status')}
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Согласование байера
+                      {t('permissions.approveAsBuyer')}
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Согласование конструктора
+                      {t('permissions.approveAsConstructor')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Дата
+                      {t('common.date')}
                     </th>
                   </tr>
                 </thead>
@@ -346,7 +345,7 @@ export const Dashboard = () => {
 
         {/* Quick Actions based on role */}
         {(user?.role === 'designer' || user?.role === 'buyer' || user?.role === 'constructor') && (
-          <Card title="Быстрые действия">
+          <Card title={t('dashboard.quickActions')}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
                 onClick={() => navigate('/models-hierarchy')}
@@ -354,7 +353,7 @@ export const Dashboard = () => {
               >
                 <Package className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm font-medium text-gray-900">
-                  Создать модель
+                  {t('dashboard.createModel')}
                 </p>
               </button>
 
@@ -364,7 +363,7 @@ export const Dashboard = () => {
               >
                 <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm font-medium text-gray-900">
-                  Управление моделями
+                  {t('dashboard.manageModels')}
                 </p>
               </button>
 
@@ -374,7 +373,7 @@ export const Dashboard = () => {
               >
                 <CheckCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm font-medium text-gray-900">
-                  Утвержденные модели
+                  {t('dashboard.approvedModels')}
                 </p>
               </button>
             </div>
@@ -383,7 +382,7 @@ export const Dashboard = () => {
 
         {/* Admin Panel Access (buyer only) */}
         {user?.role === 'buyer' && (
-          <Card title="Администрирование">
+          <Card title={t('nav.admin')}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
                 onClick={() => navigate('/admin')}
@@ -391,7 +390,7 @@ export const Dashboard = () => {
               >
                 <Settings className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm font-medium text-gray-900">
-                  Управление справочниками
+                  {t('dashboard.manageReferences')}
                 </p>
               </button>
             </div>
