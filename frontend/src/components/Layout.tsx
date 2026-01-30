@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Home, Package, Users, List } from 'lucide-react';
+import { LogOut, Home, Package, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 
@@ -28,7 +28,6 @@ export const Layout = ({ children }: LayoutProps) => {
     { name: t('nav.dashboard'), href: '/dashboard', icon: Home },
     { name: t('nav.models'), href: '/models-hierarchy', icon: Package },
     { name: t('nav.manageModels'), href: '/models', icon: List },
-    ...(user?.role === 'buyer' ? [{ name: t('nav.users'), href: '/users', icon: Users }] : []),
   ];
 
   const getRoleLabel = (role: string | undefined) => {
