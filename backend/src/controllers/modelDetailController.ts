@@ -37,7 +37,8 @@ export const getModelMaterials = async (req: AuthRequest, res: Response) => {
         id,
         material_type,
         name,
-        brand as fabric_type
+        brand as fabric_type,
+        fabric_weight_gsm
        FROM model_materials
        WHERE model_id = $1
        ORDER BY
@@ -161,7 +162,7 @@ export const uploadModelImage = async (req: AuthRequest, res: Response) => {
 export const addModelMaterial = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { material_type, name, fabric_type } = req.body;
+    const { material_type, name, fabric_type, fabric_weight_gsm } = req.body;
 
     // Проверяем, есть ли уже материал такого типа для модели
     const existingMaterial = await pool.query(
@@ -174,18 +175,18 @@ export const addModelMaterial = async (req: AuthRequest, res: Response) => {
       // Обновляем существующий материал (fabric_type хранится в колонке brand)
       result = await pool.query(
         `UPDATE model_materials
-         SET name = $1, brand = $2
-         WHERE model_id = $3 AND material_type = $4
-         RETURNING id, model_id, material_type, name, brand as fabric_type`,
-        [name, fabric_type || '', id, material_type]
+         SET name = $1, brand = $2, fabric_weight_gsm = $3
+         WHERE model_id = $4 AND material_type = $5
+         RETURNING id, model_id, material_type, name, brand as fabric_type, fabric_weight_gsm`,
+        [name, fabric_type || '', fabric_weight_gsm || '', id, material_type]
       );
     } else {
       // Создаем новый материал (fabric_type хранится в колонке brand)
       result = await pool.query(
-        `INSERT INTO model_materials (model_id, material_type, name, brand)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, model_id, material_type, name, brand as fabric_type`,
-        [id, material_type, name, fabric_type || '']
+        `INSERT INTO model_materials (model_id, material_type, name, brand, fabric_weight_gsm)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, model_id, material_type, name, brand as fabric_type, fabric_weight_gsm`,
+        [id, material_type, name, fabric_type || '', fabric_weight_gsm || '']
       );
     }
 
@@ -206,14 +207,14 @@ export const addModelMaterial = async (req: AuthRequest, res: Response) => {
 export const updateModelMaterial = async (req: AuthRequest, res: Response) => {
   try {
     const { id, materialId } = req.params;
-    const { name, fabric_type } = req.body;
+    const { name, fabric_type, fabric_weight_gsm } = req.body;
 
     const result = await pool.query(
       `UPDATE model_materials
-       SET name = $1, brand = $2
-       WHERE id = $3 AND model_id = $4
-       RETURNING id, model_id, material_type, name, brand as fabric_type`,
-      [name, fabric_type || '', materialId, id]
+       SET name = $1, brand = $2, fabric_weight_gsm = $3
+       WHERE id = $4 AND model_id = $5
+       RETURNING id, model_id, material_type, name, brand as fabric_type, fabric_weight_gsm`,
+      [name, fabric_type || '', fabric_weight_gsm || '', materialId, id]
     );
 
     if (result.rows.length === 0) {

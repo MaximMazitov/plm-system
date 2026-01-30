@@ -514,6 +514,14 @@ export async function initializeSchema() {
             ALTER TABLE model_files ADD COLUMN r2_key TEXT;
           END IF;
         END $$;
+
+        -- Добавляем колонку fabric_weight_gsm в model_materials если её нет
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='model_materials' AND column_name='fabric_weight_gsm') THEN
+            ALTER TABLE model_materials ADD COLUMN fabric_weight_gsm VARCHAR(50);
+          END IF;
+        END $$;
       `);
       // Seed reference data if empty
       await seedReferenceData(client);

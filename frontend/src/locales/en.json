@@ -228,6 +228,7 @@
     "noMaterials": "No materials",
     "selectMaterialType": "Select material type",
     "fabricType": "Fabric Type",
+    "fabricWeightGsm": "Fabric Weight (GSM)",
     "approval": "Approval",
     "buyerApproval": "Buyer Approval",
     "constructorApproval": "Constructor Approval",

@@ -35,6 +35,7 @@ interface Material {
   material_type: 'main' | 'upper' | 'lining' | 'hood_lining' | 'insulation';
   name: string;
   fabric_type: string;
+  fabric_weight_gsm?: string;
 }
 
 interface ModelColor {
@@ -71,7 +72,7 @@ export const ModelDetail = () => {
   const [isEditingProductGroup, setIsEditingProductGroup] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState('');
   const [selectedProductGroupCode, setSelectedProductGroupCode] = useState('');
-  const [editingMaterial, setEditingMaterial] = useState<{ type: string; name: string; fabric_type: string } | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<{ type: string; name: string; fabric_type: string; fabric_weight_gsm: string } | null>(null);
   const [showDeleteFileModal, setShowDeleteFileModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<{ id: number; name: string } | null>(null);
   const [showDeleteMaterialModal, setShowDeleteMaterialModal] = useState(false);
@@ -356,7 +357,8 @@ export const ModelDetail = () => {
         body: JSON.stringify({
           material_type: editingMaterial.type,
           name: editingMaterial.name,
-          fabric_type: editingMaterial.fabric_type
+          fabric_type: editingMaterial.fabric_type,
+          fabric_weight_gsm: editingMaterial.fabric_weight_gsm
         })
       });
 
@@ -1782,6 +1784,15 @@ export const ModelDetail = () => {
                             placeholder={t('modelDetail.fabricType')}
                             className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
+                          {type !== 'main' && (
+                            <input
+                              type="text"
+                              value={editingMaterial.fabric_weight_gsm}
+                              onChange={(e) => setEditingMaterial({...editingMaterial, fabric_weight_gsm: e.target.value})}
+                              placeholder={t('modelDetail.fabricWeightGsm')}
+                              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            />
+                          )}
                           <div className="flex gap-2">
                             <button
                               onClick={saveMaterial}
@@ -1808,6 +1819,9 @@ export const ModelDetail = () => {
                                 {material.fabric_type && (
                                   <p className="text-xs text-gray-500 mt-1">{t('modelDetail.fabricType')}: {material.fabric_type}</p>
                                 )}
+                                {type !== 'main' && material.fabric_weight_gsm && (
+                                  <p className="text-xs text-gray-500 mt-1">{t('modelDetail.fabricWeightGsm')}: {material.fabric_weight_gsm}</p>
+                                )}
                               </>
                             ) : (
                               <p className="text-sm text-gray-400">{t('modelDetail.notSelected')}</p>
@@ -1819,7 +1833,8 @@ export const ModelDetail = () => {
                                 onClick={() => setEditingMaterial({
                                   type,
                                   name: material?.name || '',
-                                  fabric_type: material?.fabric_type || ''
+                                  fabric_type: material?.fabric_type || '',
+                                  fabric_weight_gsm: material?.fabric_weight_gsm || ''
                                 })}
                                 className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                               >

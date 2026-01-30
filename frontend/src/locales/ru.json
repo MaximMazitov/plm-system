@@ -228,6 +228,7 @@
     "noMaterials": "Нет материалов",
     "selectMaterialType": "Выберите тип материала",
     "fabricType": "Тип ткани",
+    "fabricWeightGsm": "Граммаж ткани (GSM)",
     "approval": "Согласование",
     "buyerApproval": "Согласование байера",
     "constructorApproval": "Согласование конструктора",
