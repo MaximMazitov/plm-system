@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Send, Image as ImageIcon, X, Edit2, Trash2, Reply } from 'lucide-react';
+import { MessageCircle, Send, Image as ImageIcon, X, Edit2, Trash2, Reply, Paperclip, FileSpreadsheet, FileText, File, Download } from 'lucide-react';
 import { Card } from './ui';
 import { ConfirmModal } from './ui/ConfirmModal';
 
@@ -20,6 +20,8 @@ interface Comment {
   parent_id: number | null;
   comment_text: string;
   image_url: string | null;
+  file_name: string | null;
+  file_type: string | null;
   created_at: string;
   updated_at: string;
   username: string;
@@ -27,6 +29,24 @@ interface Comment {
   role: string;
   replies: Comment[];
 }
+
+// Helper to check if file is an image
+const isImageFile = (mimeType: string | null): boolean => {
+  if (!mimeType) return false;
+  return mimeType.startsWith('image/');
+};
+
+// Helper to get file icon based on type
+const getFileIcon = (mimeType: string | null) => {
+  if (!mimeType) return File;
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('csv')) {
+    return FileSpreadsheet;
+  }
+  if (mimeType.includes('pdf') || mimeType.includes('word') || mimeType.includes('document') || mimeType.includes('text')) {
+    return FileText;
+  }
+  return File;
+};
 
 interface ModelCommentsProps {
   modelId: number;
@@ -81,15 +101,21 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
     }
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Only create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // For non-image files, just show the filename
+        setImagePreview(null);
+      }
     }
   };
 
@@ -283,14 +309,30 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
               <>
                 <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">{comment.comment_text}</p>
 
-                {/* Image */}
+                {/* File Attachment */}
                 {comment.image_url && (
                   <div className="mt-2">
-                    <img
-                      src={getFileUrl(comment.image_url)}
-                      alt="Comment attachment"
-                      className="max-w-md rounded-lg border border-gray-200"
-                    />
+                    {isImageFile(comment.file_type) ? (
+                      <img
+                        src={getFileUrl(comment.image_url)}
+                        alt="Comment attachment"
+                        className="max-w-md rounded-lg border border-gray-200"
+                      />
+                    ) : (
+                      <a
+                        href={getFileUrl(comment.image_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-200 transition-colors"
+                      >
+                        {(() => {
+                          const FileIcon = getFileIcon(comment.file_type);
+                          return <FileIcon className="w-5 h-5 text-gray-600" />;
+                        })()}
+                        <span className="text-sm text-gray-700">{comment.file_name || 'Скачать файл'}</span>
+                        <Download className="w-4 h-4 text-gray-500" />
+                      </a>
+                    )}
                   </div>
                 )}
 
@@ -414,23 +456,44 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
           rows={3}
         />
 
-        {/* Image Preview */}
-        {imagePreview && (
+        {/* File Preview */}
+        {imageFile && (
           <div className="mt-2 relative inline-block">
-            <img src={imagePreview} alt="Preview" className="max-w-xs rounded-lg border border-gray-200" />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                clearImage();
-              }}
-              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {imagePreview ? (
+              <>
+                <img src={imagePreview} alt="Preview" className="max-w-xs rounded-lg border border-gray-200" />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearImage();
+                  }}
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200">
+                {(() => {
+                  const FileIcon = getFileIcon(imageFile.type);
+                  return <FileIcon className="w-5 h-5 text-gray-600" />;
+                })()}
+                <span className="text-sm text-gray-700">{imageFile.name}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearImage();
+                  }}
+                  className="p-1 text-red-500 hover:text-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -449,7 +512,18 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
             <input
               type="file"
               accept="image/*"
-              onChange={handleImageSelect}
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </label>
+
+          <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer flex items-center gap-2">
+            <Paperclip className="w-4 h-4" />
+            Файл
+            <input
+              type="file"
+              accept=".xlsx,.xls,.pdf,.doc,.docx,.csv,.txt"
+              onChange={handleFileSelect}
               className="hidden"
             />
           </label>

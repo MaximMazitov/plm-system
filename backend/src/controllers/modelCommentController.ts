@@ -23,18 +23,32 @@ const commentStorage = isR2Configured()
       }
     });
 
+// Allowed file extensions and MIME types
+const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
+const allowedDocTypes = /xlsx|xls|pdf|doc|docx|csv|txt/;
+const allowedMimeTypes = [
+  'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+  'application/vnd.ms-excel', // xls
+  'application/pdf',
+  'application/msword', // doc
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'text/csv',
+  'text/plain'
+];
+
 export const commentUpload = multer({
   storage: commentStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB for documents
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+    const isAllowedExt = allowedImageTypes.test(ext) || allowedDocTypes.test(ext);
+    const isAllowedMime = allowedMimeTypes.includes(file.mimetype);
 
-    if (mimetype && extname) {
+    if (isAllowedExt || isAllowedMime) {
       return cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+      cb(new Error('Allowed file types: images (jpeg, jpg, png, gif, webp) and documents (xlsx, xls, pdf, doc, docx, csv, txt)'));
     }
   }
 });
@@ -53,6 +67,8 @@ export const getModelComments = async (req: AuthRequest, res: Response) => {
         c.parent_id,
         c.comment_text,
         c.image_url,
+        c.file_name,
+        c.file_type,
         c.r2_key,
         c.created_at,
         c.updated_at,
@@ -145,11 +161,16 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    let imageUrl: string | null = null;
+    let fileUrl: string | null = null;
     let r2Key: string | null = null;
+    let fileName: string | null = null;
+    let fileType: string | null = null;
 
-    // Handle image upload
+    // Handle file upload (images and documents)
     if (imageFile) {
+      fileName = imageFile.originalname;
+      fileType = imageFile.mimetype;
+
       if (isR2Configured() && imageFile.buffer) {
         // Upload to R2
         const uploadResult = await uploadToR2(
@@ -160,7 +181,7 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
         );
 
         if (uploadResult.success && uploadResult.url) {
-          imageUrl = uploadResult.url;
+          fileUrl = uploadResult.url;
           r2Key = uploadResult.key || null;
         } else {
           // Fallback to local storage
@@ -171,20 +192,20 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
           const localFilename = 'comment-' + uniqueSuffix + path.extname(imageFile.originalname);
           fs.writeFileSync(path.join(uploadDir, localFilename), imageFile.buffer);
-          imageUrl = `/uploads/comments/${localFilename}`;
+          fileUrl = `/uploads/comments/${localFilename}`;
         }
       } else if (imageFile.filename) {
         // Local storage (diskStorage)
-        imageUrl = `/uploads/comments/${imageFile.filename}`;
+        fileUrl = `/uploads/comments/${imageFile.filename}`;
       }
     }
 
     // Insert comment
     const result = await pool.query(
-      `INSERT INTO comments (model_id, user_id, parent_id, comment_text, image_url, r2_key)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO comments (model_id, user_id, parent_id, comment_text, image_url, file_name, file_type, r2_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [modelId, userId, parent_id || null, comment_text.trim(), imageUrl, r2Key]
+      [modelId, userId, parent_id || null, comment_text.trim(), fileUrl, fileName, fileType, r2Key]
     );
 
     // Get comment with user information
