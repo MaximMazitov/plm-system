@@ -38,8 +38,6 @@ export const AdminPanel = () => {
     product_type: t('admin.productType'),
     fit_type: t('admin.fitType'),
     product_group: t('admin.productGroup'),
-    color: t('admin.color'),
-    size: t('admin.size'),
     factories: t('admin.factories')
   };
   const [referenceData, setReferenceData] = useState<ReferenceDataByCategory>({});
