@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
-import { Package, Clock, CheckCircle, TrendingUp, Settings, Check, X, HelpCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle, TrendingUp, Settings, Check, X, HelpCircle, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { modelsApi } from '../services/api';
@@ -391,6 +391,15 @@ export const Dashboard = () => {
                 <Settings className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm font-medium text-gray-900">
                   {t('dashboard.manageReferences')}
+                </p>
+              </button>
+              <button
+                onClick={() => navigate('/users')}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+              >
+                <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm font-medium text-gray-900">
+                  {t('nav.users')}
                 </p>
               </button>
             </div>
