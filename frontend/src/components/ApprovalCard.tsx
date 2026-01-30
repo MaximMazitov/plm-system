@@ -20,13 +20,15 @@ export const ApprovalCard = ({
   onUpdate
 }: ApprovalCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<ApprovalStatus>(status);
   const [newComment, setNewComment] = useState(comment || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sync newComment with comment prop when it changes
+  // Sync state with props when they change
   useEffect(() => {
+    setSelectedStatus(status);
     setNewComment(comment || '');
-  }, [comment]);
+  }, [status, comment]);
 
   const getStatusIcon = (approvalStatus: ApprovalStatus) => {
     switch (approvalStatus) {
@@ -64,23 +66,10 @@ export const ApprovalCard = ({
     }
   };
 
-  const handleStatusChange = async (newStatus: ApprovalStatus) => {
+  const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onUpdate(newStatus, newComment || undefined);
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update approval:', error);
-      alert('Не удалось обновить согласование');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCommentSave = async () => {
-    setIsSaving(true);
-    try {
-      await onUpdate(status, newComment || undefined);
+      await onUpdate(selectedStatus, newComment || undefined);
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update approval:', error);
@@ -91,6 +80,7 @@ export const ApprovalCard = ({
   };
 
   const handleCancel = () => {
+    setSelectedStatus(status);
     setNewComment(comment || '');
     setIsEditing(false);
   };
@@ -143,14 +133,14 @@ export const ApprovalCard = ({
             </label>
             <div className="space-y-2">
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
-                status === 'approved' ? 'bg-green-50 border-green-300' : 'hover:bg-gray-50'
+                selectedStatus === 'approved' ? 'bg-green-50 border-green-300' : 'hover:bg-gray-50'
               } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 <input
                   type="radio"
                   name={`approval-${title}`}
                   value="approved"
-                  checked={status === 'approved'}
-                  onChange={(e) => handleStatusChange(e.target.value as ApprovalStatus)}
+                  checked={selectedStatus === 'approved'}
+                  onChange={() => setSelectedStatus('approved')}
                   disabled={isSaving}
                   className="mr-3"
                 />
@@ -159,14 +149,14 @@ export const ApprovalCard = ({
               </label>
 
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
-                status === 'approved_with_comments' ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'
+                selectedStatus === 'approved_with_comments' ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'
               } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 <input
                   type="radio"
                   name={`approval-${title}`}
                   value="approved_with_comments"
-                  checked={status === 'approved_with_comments'}
-                  onChange={(e) => handleStatusChange(e.target.value as ApprovalStatus)}
+                  checked={selectedStatus === 'approved_with_comments'}
+                  onChange={() => setSelectedStatus('approved_with_comments')}
                   disabled={isSaving}
                   className="mr-3"
                 />
@@ -175,14 +165,14 @@ export const ApprovalCard = ({
               </label>
 
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
-                status === 'not_approved' ? 'bg-fuchsia-50 border-fuchsia-300' : 'hover:bg-gray-50'
+                selectedStatus === 'not_approved' ? 'bg-fuchsia-50 border-fuchsia-300' : 'hover:bg-gray-50'
               } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 <input
                   type="radio"
                   name={`approval-${title}`}
                   value="not_approved"
-                  checked={status === 'not_approved'}
-                  onChange={(e) => handleStatusChange(e.target.value as ApprovalStatus)}
+                  checked={selectedStatus === 'not_approved'}
+                  onChange={() => setSelectedStatus('not_approved')}
                   disabled={isSaving}
                   className="mr-3"
                 />
@@ -208,18 +198,18 @@ export const ApprovalCard = ({
 
           <div className="flex gap-2">
             <button
-              onClick={handleCommentSave}
+              onClick={handleSave}
               disabled={isSaving}
               className="flex-1 px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSaving ? 'Сохранение...' : 'Сохранить комментарий'}
+              {isSaving ? 'Сохранение...' : 'Сохранить'}
             </button>
             <button
               onClick={handleCancel}
               disabled={isSaving}
               className="flex-1 px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Закрыть
+              Отмена
             </button>
           </div>
         </div>
