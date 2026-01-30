@@ -13,6 +13,13 @@ const getFileUrl = (fileUrl: string): string => {
   return `${API_BASE_URL.replace('/api', '')}${fileUrl}`;
 };
 
+interface CommentFile {
+  id: number;
+  file_url: string;
+  file_name: string;
+  file_type: string;
+}
+
 interface Comment {
   id: number;
   model_id: number;
@@ -22,6 +29,7 @@ interface Comment {
   image_url: string | null;
   file_name: string | null;
   file_type: string | null;
+  files?: CommentFile[];
   created_at: string;
   updated_at: string;
   username: string;
@@ -58,8 +66,8 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [editingComment, setEditingComment] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<{file: File, preview: string | null}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; commentId: number | null }>({
@@ -102,31 +110,43 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      // Only create preview for images
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        // For non-image files, just show the filename
-        setImagePreview(null);
-      }
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+
+      // Add new files to existing ones
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+
+      // Create previews for new files
+      newFiles.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setFilePreviews(prev => [...prev, { file, preview: reader.result as string }]);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          setFilePreviews(prev => [...prev, { file, preview: null }]);
+        }
+      });
     }
+    // Reset input value to allow selecting the same file again
+    e.target.value = '';
   };
 
-  const clearImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const removeFile = (fileToRemove: File) => {
+    setSelectedFiles(prev => prev.filter(f => f !== fileToRemove));
+    setFilePreviews(prev => prev.filter(p => p.file !== fileToRemove));
+  };
+
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
+    setFilePreviews([]);
   };
 
   const handleSubmit = async (parentId: number | null = null) => {
     const text = parentId === replyTo ? newComment : newComment;
-    if (!text.trim() && !imageFile) return;
+    if (!text.trim() && selectedFiles.length === 0) return;
 
     setIsLoading(true);
     try {
@@ -136,9 +156,10 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
       if (parentId) {
         formData.append('parent_id', parentId.toString());
       }
-      if (imageFile) {
-        formData.append('image', imageFile);
-      }
+      // Append all selected files
+      selectedFiles.forEach(file => {
+        formData.append('images', file);
+      });
 
       const response = await fetch(`${API_BASE_URL}/model-comments/${modelId}`, {
         method: 'POST',
@@ -149,7 +170,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
       if (response.ok) {
         setNewComment('');
         setReplyTo(null);
-        clearImage();
+        clearAllFiles();
         await loadComments();
       }
     } catch (error) {
@@ -309,8 +330,37 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
               <>
                 <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">{comment.comment_text}</p>
 
-                {/* File Attachment */}
-                {comment.image_url && (
+                {/* File Attachments - Multiple files support */}
+                {(comment.files && comment.files.length > 0) ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {comment.files.map((file) => (
+                      <div key={file.id}>
+                        {isImageFile(file.file_type) ? (
+                          <img
+                            src={getFileUrl(file.file_url)}
+                            alt={file.file_name}
+                            className="max-w-xs rounded-lg border border-gray-200"
+                          />
+                        ) : (
+                          <a
+                            href={getFileUrl(file.file_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-200 transition-colors"
+                          >
+                            {(() => {
+                              const FileIcon = getFileIcon(file.file_type);
+                              return <FileIcon className="w-5 h-5 text-gray-600" />;
+                            })()}
+                            <span className="text-sm text-gray-700">{file.file_name || 'Скачать файл'}</span>
+                            <Download className="w-4 h-4 text-gray-500" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : comment.image_url && (
+                  // Fallback for old comments with single file
                   <div className="mt-2">
                     {isImageFile(comment.file_type) ? (
                       <img
@@ -456,40 +506,44 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
           rows={3}
         />
 
-        {/* File Preview */}
-        {imageFile && (
-          <div className="mt-2 relative inline-block">
-            {imagePreview ? (
-              <>
-                <img src={imagePreview} alt="Preview" className="max-w-xs rounded-lg border border-gray-200" />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearImage();
-                  }}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200">
-                {(() => {
-                  const FileIcon = getFileIcon(imageFile.type);
-                  return <FileIcon className="w-5 h-5 text-gray-600" />;
-                })()}
-                <span className="text-sm text-gray-700">{imageFile.name}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearImage();
-                  }}
-                  className="p-1 text-red-500 hover:text-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+        {/* File Previews - Multiple files */}
+        {filePreviews.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {filePreviews.map((item, index) => (
+              <div key={index} className="relative inline-block">
+                {item.preview ? (
+                  <>
+                    <img src={item.preview} alt="Preview" className="max-w-[150px] max-h-[150px] rounded-lg border border-gray-200 object-cover" />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(item.file);
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                    {(() => {
+                      const FileIcon = getFileIcon(item.file.type);
+                      return <FileIcon className="w-4 h-4 text-gray-600" />;
+                    })()}
+                    <span className="text-xs text-gray-700 max-w-[100px] truncate">{item.file.name}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(item.file);
+                      }}
+                      className="p-0.5 text-red-500 hover:text-red-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
         )}
 
@@ -499,7 +553,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
               e.stopPropagation();
               handleSubmit(null);
             }}
-            disabled={isLoading || (!newComment.trim() && !imageFile)}
+            disabled={isLoading || (!newComment.trim() && selectedFiles.length === 0)}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Send className="w-4 h-4" />
@@ -512,6 +566,7 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -523,10 +578,17 @@ export const ModelComments = ({ modelId }: ModelCommentsProps) => {
             <input
               type="file"
               accept=".xlsx,.xls,.pdf,.doc,.docx,.csv,.txt"
+              multiple
               onChange={handleFileSelect}
               className="hidden"
             />
           </label>
+
+          {selectedFiles.length > 0 && (
+            <span className="text-sm text-gray-500">
+              Выбрано: {selectedFiles.length} файл(ов)
+            </span>
+          )}
         </div>
       </div>
 

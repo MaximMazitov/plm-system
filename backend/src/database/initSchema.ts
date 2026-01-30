@@ -332,6 +332,17 @@ export async function initializeSchema() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- 26.1. Файлы комментариев (зависит от comments)
+        CREATE TABLE IF NOT EXISTS comment_files (
+          id SERIAL PRIMARY KEY,
+          comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
+          file_url TEXT NOT NULL,
+          file_name VARCHAR(255),
+          file_type VARCHAR(100),
+          r2_key TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
         -- 27. Права пользователей (зависит от users)
         CREATE TABLE IF NOT EXISTS user_permissions (
           id SERIAL PRIMARY KEY,
@@ -831,6 +842,17 @@ export async function initializeSchema() {
         r2_key TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Файлы комментариев
+      CREATE TABLE IF NOT EXISTS comment_files (
+        id SERIAL PRIMARY KEY,
+        comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
+        file_url TEXT NOT NULL,
+        file_name VARCHAR(255),
+        file_type VARCHAR(100),
+        r2_key TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
       -- Права пользователей

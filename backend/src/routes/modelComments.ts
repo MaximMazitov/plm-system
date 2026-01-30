@@ -13,8 +13,8 @@ const router = express.Router();
 // Get all comments for a model
 router.get('/:modelId', authenticateToken, getModelComments);
 
-// Create a comment (with optional image)
-router.post('/:modelId', authenticateToken, commentUpload.single('image'), createModelComment);
+// Create a comment (with optional images - up to 10 files)
+router.post('/:modelId', authenticateToken, commentUpload.array('images', 10), createModelComment);
 
 // Update a comment
 router.put('/:commentId', authenticateToken, updateModelComment);

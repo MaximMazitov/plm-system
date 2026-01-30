@@ -82,14 +82,39 @@ export const getModelComments = async (req: AuthRequest, res: Response) => {
       [modelId]
     );
 
+    // Get all files for comments in this model
+    const commentIds = result.rows.map((c: any) => c.id);
+    let filesResult: any = { rows: [] };
+    if (commentIds.length > 0) {
+      filesResult = await pool.query(
+        `SELECT id, comment_id, file_url, file_name, file_type
+         FROM comment_files
+         WHERE comment_id = ANY($1)`,
+        [commentIds]
+      );
+    }
+
+    // Group files by comment_id
+    const filesByComment = new Map();
+    filesResult.rows.forEach((file: any) => {
+      if (!filesByComment.has(file.comment_id)) {
+        filesByComment.set(file.comment_id, []);
+      }
+      filesByComment.get(file.comment_id).push(file);
+    });
+
     // Organize comments into tree structure
     const comments = result.rows;
     const commentMap = new Map();
     const rootComments: any[] = [];
 
-    // First pass: create map of all comments
+    // First pass: create map of all comments with their files
     comments.forEach((comment: any) => {
-      commentMap.set(comment.id, { ...comment, replies: [] });
+      commentMap.set(comment.id, {
+        ...comment,
+        files: filesByComment.get(comment.id) || [],
+        replies: []
+      });
     });
 
     // Second pass: build tree structure
@@ -124,7 +149,7 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
     const { modelId } = req.params;
     const { comment_text, parent_id } = req.body;
     const userId = req.user?.id;
-    const imageFile = req.file;
+    const imageFiles = req.files as Express.Multer.File[] | undefined;
 
     if (!comment_text || !comment_text.trim()) {
       return res.status(400).json({
@@ -161,52 +186,63 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    let fileUrl: string | null = null;
-    let r2Key: string | null = null;
-    let fileName: string | null = null;
-    let fileType: string | null = null;
+    // Insert comment first (without files for backwards compatibility)
+    const result = await pool.query(
+      `INSERT INTO comments (model_id, user_id, parent_id, comment_text)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [modelId, userId, parent_id || null, comment_text.trim()]
+    );
 
-    // Handle file upload (images and documents)
-    if (imageFile) {
-      fileName = imageFile.originalname;
-      fileType = imageFile.mimetype;
+    const commentId = result.rows[0].id;
+    const uploadedFiles: any[] = [];
 
-      if (isR2Configured() && imageFile.buffer) {
-        // Upload to R2
-        const uploadResult = await uploadToR2(
-          imageFile.buffer,
-          imageFile.originalname,
-          `comments/${modelId}`,
-          imageFile.mimetype
-        );
+    // Handle multiple file uploads
+    if (imageFiles && imageFiles.length > 0) {
+      for (const file of imageFiles) {
+        let fileUrl: string | null = null;
+        let r2Key: string | null = null;
 
-        if (uploadResult.success && uploadResult.url) {
-          fileUrl = uploadResult.url;
-          r2Key = uploadResult.key || null;
-        } else {
-          // Fallback to local storage
-          const uploadDir = path.join(__dirname, '../../uploads/comments');
-          if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+        if (isR2Configured() && file.buffer) {
+          // Upload to R2
+          const uploadResult = await uploadToR2(
+            file.buffer,
+            file.originalname,
+            `comments/${modelId}/${commentId}`,
+            file.mimetype
+          );
+
+          if (uploadResult.success && uploadResult.url) {
+            fileUrl = uploadResult.url;
+            r2Key = uploadResult.key || null;
+          } else {
+            // Fallback to local storage
+            const uploadDir = path.join(__dirname, '../../uploads/comments');
+            if (!fs.existsSync(uploadDir)) {
+              fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const localFilename = 'comment-' + uniqueSuffix + path.extname(file.originalname);
+            fs.writeFileSync(path.join(uploadDir, localFilename), file.buffer);
+            fileUrl = `/uploads/comments/${localFilename}`;
           }
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-          const localFilename = 'comment-' + uniqueSuffix + path.extname(imageFile.originalname);
-          fs.writeFileSync(path.join(uploadDir, localFilename), imageFile.buffer);
-          fileUrl = `/uploads/comments/${localFilename}`;
+        } else if (file.filename) {
+          // Local storage (diskStorage)
+          fileUrl = `/uploads/comments/${file.filename}`;
         }
-      } else if (imageFile.filename) {
-        // Local storage (diskStorage)
-        fileUrl = `/uploads/comments/${imageFile.filename}`;
+
+        // Insert file record into comment_files table
+        if (fileUrl) {
+          const fileResult = await pool.query(
+            `INSERT INTO comment_files (comment_id, file_url, file_name, file_type, r2_key)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *`,
+            [commentId, fileUrl, file.originalname, file.mimetype, r2Key]
+          );
+          uploadedFiles.push(fileResult.rows[0]);
+        }
       }
     }
-
-    // Insert comment
-    const result = await pool.query(
-      `INSERT INTO comments (model_id, user_id, parent_id, comment_text, image_url, file_name, file_type, r2_key)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [modelId, userId, parent_id || null, comment_text.trim(), fileUrl, fileName, fileType, r2Key]
-    );
 
     // Get comment with user information
     const commentWithUser = await pool.query(
@@ -218,12 +254,12 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
       FROM comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.id = $1`,
-      [result.rows[0].id]
+      [commentId]
     );
 
     return res.status(201).json({
       success: true,
-      data: commentWithUser.rows[0],
+      data: { ...commentWithUser.rows[0], files: uploadedFiles },
       message: 'Comment created successfully'
     });
   } catch (error) {
@@ -335,7 +371,30 @@ export const deleteModelComment = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Delete image from R2 or local storage
+    // Get all files for this comment (and any nested replies due to CASCADE)
+    const filesResult = await pool.query(
+      `SELECT file_url, r2_key FROM comment_files WHERE comment_id = $1`,
+      [commentId]
+    );
+
+    // Delete files from R2 or local storage
+    for (const file of filesResult.rows) {
+      if (file.r2_key) {
+        await deleteFromR2(file.r2_key);
+      } else if (file.file_url && file.file_url.startsWith('/uploads/')) {
+        const filePath = path.join(__dirname, '../../', file.file_url);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } else if (file.file_url) {
+        const key = extractKeyFromUrl(file.file_url);
+        if (key) {
+          await deleteFromR2(key);
+        }
+      }
+    }
+
+    // Delete old single image from R2 or local storage (backwards compatibility)
     if (comment.r2_key) {
       await deleteFromR2(comment.r2_key);
     } else if (comment.image_url) {
@@ -345,7 +404,6 @@ export const deleteModelComment = async (req: AuthRequest, res: Response) => {
           fs.unlinkSync(imagePath);
         }
       } else {
-        // Try to extract key from URL
         const key = extractKeyFromUrl(comment.image_url);
         if (key) {
           await deleteFromR2(key);
@@ -353,7 +411,7 @@ export const deleteModelComment = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Delete comment (CASCADE will delete replies)
+    // Delete comment (CASCADE will delete replies and comment_files)
     await pool.query('DELETE FROM comments WHERE id = $1', [commentId]);
 
     return res.json({
