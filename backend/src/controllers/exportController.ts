@@ -130,7 +130,7 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
     const modelIds = models.map(m => m.id);
 
     const materialsResult = await pool.query(`
-      SELECT model_id, material_type, name, fabric_type, fabric_weight_gsm
+      SELECT model_id, material_type, name, brand as fabric_type, fabric_weight_gsm
       FROM model_materials
       WHERE model_id = ANY($1)
     `, [modelIds]);
