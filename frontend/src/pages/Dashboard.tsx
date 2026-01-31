@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
-import { Package, Clock, CheckCircle, TrendingUp, Settings, Check, X, HelpCircle, Users } from 'lucide-react';
+import { Package, Clock, CheckCircle, TrendingUp, Settings, Check, X, HelpCircle, Users, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { modelsApi } from '../services/api';
@@ -190,8 +190,8 @@ export const Dashboard = () => {
   };
 
   const getApprovalIcon = (approvalStatus?: ApprovalStatus) => {
-    if (!approvalStatus || approvalStatus === 'not_approved') {
-      return <X className="w-5 h-5 text-fuchsia-600" />;
+    if (!approvalStatus || approvalStatus === 'pending') {
+      return <Circle className="w-5 h-5 text-gray-400" />;
     }
     if (approvalStatus === 'approved') {
       return <Check className="w-5 h-5 text-green-600" />;
@@ -199,7 +199,10 @@ export const Dashboard = () => {
     if (approvalStatus === 'approved_with_comments') {
       return <HelpCircle className="w-5 h-5 text-yellow-600" />;
     }
-    return <X className="w-5 h-5 text-fuchsia-600" />;
+    if (approvalStatus === 'not_approved') {
+      return <X className="w-5 h-5 text-fuchsia-600" />;
+    }
+    return <Circle className="w-5 h-5 text-gray-400" />;
   };
 
   return (

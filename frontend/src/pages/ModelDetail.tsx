@@ -1216,7 +1216,7 @@ export const ModelDetail = () => {
                 <ApprovalCard
                   key={`buyer-${model.id}`}
                   title={t('modelDetail.buyer')}
-                  status={model.buyer_approval || 'not_approved'}
+                  status={model.buyer_approval || 'pending'}
                   comment={model.buyer_approval_comment || undefined}
                   approvedAt={model.buyer_approved_at}
                   canEdit={hasPermission('can_approve_as_buyer')}
@@ -1226,7 +1226,7 @@ export const ModelDetail = () => {
                 <ApprovalCard
                   key={`constructor-${model.id}`}
                   title={t('modelDetail.constructor')}
-                  status={model.constructor_approval || 'not_approved'}
+                  status={model.constructor_approval || 'pending'}
                   comment={model.constructor_approval_comment || undefined}
                   approvedAt={model.constructor_approved_at}
                   canEdit={hasPermission('can_approve_as_constructor')}

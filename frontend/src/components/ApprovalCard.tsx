@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, X, HelpCircle } from 'lucide-react';
+import { Check, X, HelpCircle, Circle } from 'lucide-react';
 import type { ApprovalStatus } from '../types';
 
 interface ApprovalCardProps {
@@ -39,8 +39,10 @@ export const ApprovalCard = ({
       case 'approved_with_comments':
         return <HelpCircle className="w-6 h-6 text-yellow-600" />;
       case 'not_approved':
-      default:
         return <X className="w-6 h-6 text-fuchsia-600" />;
+      case 'pending':
+      default:
+        return <Circle className="w-6 h-6 text-gray-400" />;
     }
   };
 
@@ -51,8 +53,10 @@ export const ApprovalCard = ({
       case 'approved_with_comments':
         return t('approval.approvedWithComments');
       case 'not_approved':
-      default:
         return t('approval.notApproved');
+      case 'pending':
+      default:
+        return t('approval.pending');
     }
   };
 
@@ -63,8 +67,10 @@ export const ApprovalCard = ({
       case 'approved_with_comments':
         return 'bg-yellow-50 border-yellow-200';
       case 'not_approved':
-      default:
         return 'bg-fuchsia-50 border-fuchsia-200';
+      case 'pending':
+      default:
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -134,6 +140,22 @@ export const ApprovalCard = ({
               {t('approval.approvalStatus')}
             </label>
             <div className="space-y-2">
+              <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
+                selectedStatus === 'pending' ? 'bg-gray-100 border-gray-300' : 'hover:bg-gray-50'
+              } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <input
+                  type="radio"
+                  name={`approval-${title}`}
+                  value="pending"
+                  checked={selectedStatus === 'pending'}
+                  onChange={() => setSelectedStatus('pending')}
+                  disabled={isSaving}
+                  className="mr-3"
+                />
+                <Circle className="w-5 h-5 text-gray-400 mr-2" />
+                <span className="text-sm">{t('approval.pending')}</span>
+              </label>
+
               <label className={`flex items-center p-2 border rounded-lg cursor-pointer transition-colors ${
                 selectedStatus === 'approved' ? 'bg-green-50 border-green-300' : 'hover:bg-gray-50'
               } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>

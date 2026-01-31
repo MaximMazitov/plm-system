@@ -269,6 +269,7 @@
     "comment": "Комментарий",
     "changeStatus": "Изменить статус",
     "approvalStatus": "Статус согласования",
+    "pending": "Статус не присвоен",
     "approved": "Согласовано",
     "approvedWithComments": "Согласовано с комментариями",
     "notApproved": "Не согласовано",

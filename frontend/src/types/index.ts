@@ -23,7 +23,7 @@ export type SeasonType = 'spring_summer' | 'autumn_winter';
 export type StageType = 'ds' | 'pps';
 
 // Approval statuses
-export type ApprovalStatus = 'not_approved' | 'approved' | 'approved_with_comments';
+export type ApprovalStatus = 'pending' | 'not_approved' | 'approved' | 'approved_with_comments';
 
 // User interface
 export interface User {

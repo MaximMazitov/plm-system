@@ -269,6 +269,7 @@
     "comment": "Comment",
     "changeStatus": "Change Status",
     "approvalStatus": "Approval Status",
+    "pending": "Not assigned",
     "approved": "Approved",
     "approvedWithComments": "Approved with comments",
     "notApproved": "Not approved",
