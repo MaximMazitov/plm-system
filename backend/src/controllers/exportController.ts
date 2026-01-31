@@ -26,9 +26,9 @@ function getImageExtension(url: string): 'jpeg' | 'png' | 'gif' {
 
 export const exportModelsToExcel = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { season_id, gender, age_group, collection_id, model_ids } = req.query;
+    const { season_id, gender, kids_gender, age_group, collection_id, model_ids } = req.query;
 
-    console.log('Export request params:', { season_id, gender, age_group, collection_id, model_ids });
+    console.log('Export request params:', { season_id, gender, kids_gender, age_group, collection_id, model_ids });
 
     // Build query based on filters
     let whereConditions: string[] = [];
@@ -59,17 +59,16 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
       params.push(gender);
     }
 
-    // age_group can be either c.gender (boys, girls, babies) or c.age_group (0-2, 2-7, 7-14)
+    // kids_gender maps to c.gender (boys, girls, babies) for kids collections
+    if (kids_gender) {
+      whereConditions.push(`c.gender = $${paramIndex++}`);
+      params.push(kids_gender);
+    }
+
+    // age_group maps to c.age_group (0-2, 2-7, 7-14)
     if (age_group) {
-      const ageGroupValue = age_group as string;
-      // Check if it's a kids gender value or an actual age group
-      if (['boys', 'girls', 'babies'].includes(ageGroupValue)) {
-        whereConditions.push(`c.gender = $${paramIndex++}`);
-        params.push(ageGroupValue);
-      } else {
-        whereConditions.push(`c.age_group = $${paramIndex++}`);
-        params.push(ageGroupValue);
-      }
+      whereConditions.push(`c.age_group = $${paramIndex++}`);
+      params.push(age_group);
     }
 
     const whereClause = whereConditions.length > 0

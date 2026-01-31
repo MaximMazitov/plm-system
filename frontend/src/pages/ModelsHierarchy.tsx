@@ -86,7 +86,8 @@ export const ModelsHierarchy = () => {
   const handleExport = async (exportParams: {
     season_id?: string;
     gender?: string;
-    age_group?: string;
+    kids_gender?: string;  // boys, girls, babies
+    age_group?: string;    // 0-2, 2-7, 7-14
     collection_id?: string;
   }) => {
     setIsExporting(true);
@@ -96,6 +97,7 @@ export const ModelsHierarchy = () => {
 
       if (exportParams.season_id) params.append('season_id', exportParams.season_id);
       if (exportParams.gender) params.append('gender', exportParams.gender);
+      if (exportParams.kids_gender) params.append('kids_gender', exportParams.kids_gender);
       if (exportParams.age_group) params.append('age_group', exportParams.age_group);
       if (exportParams.collection_id) params.append('collection_id', exportParams.collection_id);
 
@@ -701,7 +703,7 @@ export const ModelsHierarchy = () => {
           {/* Export button for this gender */}
           <div className="flex justify-end">
             <Button
-              onClick={() => handleExport({ season_id: seasonId, gender: 'kids', age_group: gender })}
+              onClick={() => handleExport({ season_id: seasonId, gender: 'kids', kids_gender: gender })}
               disabled={isExporting}
               variant="outline"
             >
@@ -742,16 +744,33 @@ export const ModelsHierarchy = () => {
 
     // Уровень 5: Список коллекций
     if (!collectionId) {
+      // Build export params based on current filters
+      const exportParams: {
+        season_id?: string;
+        gender?: string;
+        kids_gender?: string;
+        age_group?: string;
+      } = { season_id: seasonId };
+
+      if (collectionType) {
+        exportParams.gender = collectionType;
+      }
+      // For kids, we need to pass both the kids gender (boys/girls/babies) and age group
+      if (collectionType === 'kids') {
+        if (gender) {
+          exportParams.kids_gender = gender; // boys, girls, babies
+        }
+        if (ageGroup) {
+          exportParams.age_group = ageGroup; // 0-2, 2-7, 7-14
+        }
+      }
+
       return (
         <div className="space-y-4">
           {/* Кнопки создания коллекции и экспорта */}
           <div className="flex justify-end gap-2">
             <Button
-              onClick={() => handleExport({
-                season_id: seasonId,
-                gender: collectionType,
-                age_group: ageGroup || undefined
-              })}
+              onClick={() => handleExport(exportParams)}
               disabled={isExporting}
               variant="outline"
             >
