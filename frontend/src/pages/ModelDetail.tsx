@@ -1308,6 +1308,11 @@ export const ModelDetail = () => {
                 </div>
 
                 <div>
+                  <label className="text-sm text-gray-600">{t('modelDetail.productType')}</label>
+                  <p className="text-sm font-medium text-gray-900">{model.product_type || '—'}</p>
+                </div>
+
+                <div>
                   <label className="text-sm text-gray-600">{t('models.category')}</label>
                   {editingCategory ? (
                     <div className="mt-1 space-y-2">
