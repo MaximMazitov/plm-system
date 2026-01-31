@@ -28,6 +28,8 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
   try {
     const { season_id, gender, age_group, collection_id, model_ids } = req.query;
 
+    console.log('Export request params:', { season_id, gender, age_group, collection_id, model_ids });
+
     // Build query based on filters
     let whereConditions: string[] = [];
     let params: any[] = [];
@@ -51,14 +53,23 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
       params.push(parseInt(season_id as string));
     }
 
+    // gender param maps to c.type (kids, men, women)
     if (gender) {
       whereConditions.push(`c.type = $${paramIndex++}`);
       params.push(gender);
     }
 
+    // age_group can be either c.gender (boys, girls, babies) or c.age_group (0-2, 2-7, 7-14)
     if (age_group) {
-      whereConditions.push(`c.age_group = $${paramIndex++}`);
-      params.push(age_group);
+      const ageGroupValue = age_group as string;
+      // Check if it's a kids gender value or an actual age group
+      if (['boys', 'girls', 'babies'].includes(ageGroupValue)) {
+        whereConditions.push(`c.gender = $${paramIndex++}`);
+        params.push(ageGroupValue);
+      } else {
+        whereConditions.push(`c.age_group = $${paramIndex++}`);
+        params.push(ageGroupValue);
+      }
     }
 
     const whereClause = whereConditions.length > 0
@@ -100,13 +111,18 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
       ORDER BY c.type, c.age_group, c.name, m.model_number
     `;
 
+    console.log('Export SQL query:', modelsQuery);
+    console.log('Export SQL params:', params);
+
     const modelsResult = await pool.query(modelsQuery, params);
     const models = modelsResult.rows;
+
+    console.log('Export found models:', models.length);
 
     if (models.length === 0) {
       res.status(404).json({
         success: false,
-        error: 'No models found for export'
+        error: 'No models found for export. Check if there are models matching your filter criteria.'
       });
       return;
     }

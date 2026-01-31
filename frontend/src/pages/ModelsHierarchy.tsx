@@ -643,7 +643,7 @@ export const ModelsHierarchy = () => {
           {/* Export button for kids collection type */}
           <div className="flex justify-end">
             <Button
-              onClick={() => handleExport({ season_id: seasonId, gender: collectionType })}
+              onClick={() => handleExport({ season_id: seasonId, gender: 'kids' })}
               disabled={isExporting}
               variant="outline"
             >
@@ -701,7 +701,7 @@ export const ModelsHierarchy = () => {
           {/* Export button for this gender */}
           <div className="flex justify-end">
             <Button
-              onClick={() => handleExport({ season_id: seasonId, gender: collectionType, age_group: gender })}
+              onClick={() => handleExport({ season_id: seasonId, gender: 'kids', age_group: gender })}
               disabled={isExporting}
               variant="outline"
             >
