@@ -462,7 +462,7 @@ export const updateBuyerApproval = async (req: AuthRequest, res: Response) => {
     const { approval_status, comment } = req.body;
     const userId = req.user?.id;
 
-    if (!['not_approved', 'approved', 'approved_with_comments'].includes(approval_status)) {
+    if (!['pending', 'not_approved', 'approved', 'approved_with_comments'].includes(approval_status)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid approval status'
@@ -473,7 +473,7 @@ export const updateBuyerApproval = async (req: AuthRequest, res: Response) => {
       `UPDATE models
        SET buyer_approval = $1,
            buyer_approval_comment = $2,
-           buyer_approved_at = CURRENT_TIMESTAMP
+           buyer_approved_at = ${approval_status === 'pending' ? 'NULL' : 'CURRENT_TIMESTAMP'}
        WHERE id = $3
        RETURNING *`,
       [approval_status, comment || null, id]
@@ -513,7 +513,7 @@ export const updateConstructorApproval = async (req: AuthRequest, res: Response)
     const { approval_status, comment } = req.body;
     const userId = req.user?.id;
 
-    if (!['not_approved', 'approved', 'approved_with_comments'].includes(approval_status)) {
+    if (!['pending', 'not_approved', 'approved', 'approved_with_comments'].includes(approval_status)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid approval status'
@@ -524,7 +524,7 @@ export const updateConstructorApproval = async (req: AuthRequest, res: Response)
       `UPDATE models
        SET constructor_approval = $1,
            constructor_approval_comment = $2,
-           constructor_approved_at = CURRENT_TIMESTAMP
+           constructor_approved_at = ${approval_status === 'pending' ? 'NULL' : 'CURRENT_TIMESTAMP'}
        WHERE id = $3
        RETURNING *`,
       [approval_status, comment || null, id]
