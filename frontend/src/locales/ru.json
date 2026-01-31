@@ -180,7 +180,12 @@
     "createFirstModel": "Создать первую модель",
     "collection": "Коллекция",
     "designer": "Дизайнер",
-    "date": "Дата"
+    "date": "Дата",
+    "exportAll": "Экспорт для тендера",
+    "exportCollection": "Экспорт коллекции",
+    "exporting": "Экспорт...",
+    "exportSuccess": "Экспорт успешно завершен",
+    "exportError": "Ошибка при экспорте"
   },
   "modelDetail": {
     "basicInfo": "Основная информация",

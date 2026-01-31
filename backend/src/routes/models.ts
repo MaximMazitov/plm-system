@@ -31,6 +31,7 @@ import {
   exportModelFiles,
   upload
 } from '../controllers/modelFilesController';
+import { exportModelsToExcel } from '../controllers/exportController';
 import { authenticateToken, authorizeRoles } from '../middleware/auth';
 import { checkPermission } from '../middleware/permissions';
 
@@ -38,6 +39,9 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(authenticateToken);
+
+// Export models to Excel (tender export)
+router.get('/export/excel', checkPermission('can_view_models'), exportModelsToExcel);
 
 // Create model - designers and constructors
 router.post(

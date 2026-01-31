@@ -180,7 +180,12 @@
     "createFirstModel": "Create first model",
     "collection": "Collection",
     "designer": "Designer",
-    "date": "Date"
+    "date": "Date",
+    "exportAll": "Export for Tender",
+    "exportCollection": "Export Collection",
+    "exporting": "Exporting...",
+    "exportSuccess": "Export completed successfully",
+    "exportError": "Export error"
   },
   "modelDetail": {
     "basicInfo": "Basic Information",

@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge, Button } from '../components/ui';
-import { ChevronRight, FolderOpen, Package, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ChevronRight, FolderOpen, Package, Plus, Trash2, Edit2, Download } from 'lucide-react';
 import { modelsApi } from '../services/api';
 import type { Model } from '../types';
 import { CreateModelModal } from '../components/CreateModelModal';
@@ -80,6 +80,65 @@ export const ModelsHierarchy = () => {
   const [editCollectionName, setEditCollectionName] = useState('');
   const [showDeleteModelModal, setShowDeleteModelModal] = useState(false);
   const [modelToDelete, setModelToDelete] = useState<{ id: number; model_number: string } | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Export function for tender Excel
+  const handleExport = async (exportParams: {
+    season_id?: string;
+    gender?: string;
+    age_group?: string;
+    collection_id?: string;
+  }) => {
+    setIsExporting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams();
+
+      if (exportParams.season_id) params.append('season_id', exportParams.season_id);
+      if (exportParams.gender) params.append('gender', exportParams.gender);
+      if (exportParams.age_group) params.append('age_group', exportParams.age_group);
+      if (exportParams.collection_id) params.append('collection_id', exportParams.collection_id);
+
+      const response = await fetch(`${API_BASE_URL}/models/export/excel?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Export failed');
+      }
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'tender_export.xlsx';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match) {
+          filename = decodeURIComponent(match[1]);
+        }
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(t('models.exportSuccess'));
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast.error(error.message || t('models.exportError'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   useEffect(() => {
     loadPermissions();
@@ -533,7 +592,20 @@ export const ModelsHierarchy = () => {
       ];
 
       return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          {/* Export button for entire season */}
+          <div className="flex justify-end">
+            <Button
+              onClick={() => handleExport({ season_id: seasonId })}
+              disabled={isExporting}
+              variant="outline"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? t('models.exporting') : t('models.exportAll')}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {types.map((type) => (
             <div
               key={type.value}
@@ -553,6 +625,7 @@ export const ModelsHierarchy = () => {
               </Card>
             </div>
           ))}
+          </div>
         </div>
       );
     }
@@ -566,7 +639,20 @@ export const ModelsHierarchy = () => {
       ];
 
       return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          {/* Export button for kids collection type */}
+          <div className="flex justify-end">
+            <Button
+              onClick={() => handleExport({ season_id: seasonId, gender: collectionType })}
+              disabled={isExporting}
+              variant="outline"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? t('models.exporting') : t('models.exportAll')}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {genders.map((g) => (
             <div
               key={g.value}
@@ -586,6 +672,7 @@ export const ModelsHierarchy = () => {
               </Card>
             </div>
           ))}
+          </div>
         </div>
       );
     }
@@ -610,7 +697,20 @@ export const ModelsHierarchy = () => {
       const ages = agesByGender[gender];
 
       return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          {/* Export button for this gender */}
+          <div className="flex justify-end">
+            <Button
+              onClick={() => handleExport({ season_id: seasonId, gender: collectionType, age_group: gender })}
+              disabled={isExporting}
+              variant="outline"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? t('models.exporting') : t('models.exportAll')}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {ages.map((age) => (
             <div
               key={age.value}
@@ -635,6 +735,7 @@ export const ModelsHierarchy = () => {
               </Card>
             </div>
           ))}
+          </div>
         </div>
       );
     }
@@ -643,15 +744,27 @@ export const ModelsHierarchy = () => {
     if (!collectionId) {
       return (
         <div className="space-y-4">
-          {/* Кнопка создания коллекции */}
-          {hasPermission('can_edit_collections') && (
-            <div className="flex justify-end">
+          {/* Кнопки создания коллекции и экспорта */}
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => handleExport({
+                season_id: seasonId,
+                gender: collectionType,
+                age_group: ageGroup || undefined
+              })}
+              disabled={isExporting}
+              variant="outline"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? t('models.exporting') : t('models.exportAll')}
+            </Button>
+            {hasPermission('can_edit_collections') && (
               <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 {t('models.createCollection')}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {collections.map((collection) => (
@@ -717,14 +830,22 @@ export const ModelsHierarchy = () => {
     // Уровень 6: Список моделей
     return (
       <div className="space-y-4">
-        {hasPermission('can_create_models') && (
-          <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button
+            onClick={() => handleExport({ collection_id: collectionId })}
+            disabled={isExporting || models.length === 0}
+            variant="outline"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {isExporting ? t('models.exporting') : t('models.exportCollection')}
+          </Button>
+          {hasPermission('can_create_models') && (
             <Button onClick={() => setShowCreateModelModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
               {t('models.createModel')}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
 
         {models.length === 0 ? (
           <Card>
