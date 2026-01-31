@@ -91,7 +91,7 @@ const ensureTables = async () => {
       DO $$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='buyer_approval') THEN
-          ALTER TABLE models ADD COLUMN buyer_approval VARCHAR(50) DEFAULT 'not_approved';
+          ALTER TABLE models ADD COLUMN buyer_approval VARCHAR(50) DEFAULT 'pending';
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='buyer_approval_comment') THEN
           ALTER TABLE models ADD COLUMN buyer_approval_comment TEXT;
@@ -100,7 +100,7 @@ const ensureTables = async () => {
           ALTER TABLE models ADD COLUMN buyer_approved_at TIMESTAMP;
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='constructor_approval') THEN
-          ALTER TABLE models ADD COLUMN constructor_approval VARCHAR(50) DEFAULT 'not_approved';
+          ALTER TABLE models ADD COLUMN constructor_approval VARCHAR(50) DEFAULT 'pending';
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='constructor_approval_comment') THEN
           ALTER TABLE models ADD COLUMN constructor_approval_comment TEXT;
@@ -108,6 +108,10 @@ const ensureTables = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='models' AND column_name='constructor_approved_at') THEN
           ALTER TABLE models ADD COLUMN constructor_approved_at TIMESTAMP;
         END IF;
+
+        -- Update default values for existing columns
+        ALTER TABLE models ALTER COLUMN buyer_approval SET DEFAULT 'pending';
+        ALTER TABLE models ALTER COLUMN constructor_approval SET DEFAULT 'pending';
       END $$;
     `);
 
