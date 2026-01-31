@@ -165,31 +165,30 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
       views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
     });
 
-    // Define columns
+    // Define columns - порядок как в примере "Поля для тендера.xlsx"
     worksheet.columns = [
-      { header: 'Скетч / Photos', key: 'sketch', width: 15 },
-      { header: 'Номер модели / Model number', key: 'model_number', width: 18 },
-      { header: 'Категория / Sub-Category', key: 'category', width: 20 },
-      { header: 'Тип продукта / Type of product', key: 'product_type', width: 20 },
-      { header: 'Розничная группа / Retail Group', key: 'product_group', width: 20 },
-      { header: 'Код группы / Group Code', key: 'product_group_code', width: 12 },
-      { header: 'Гендер / Gender', key: 'gender', width: 12 },
-      { header: 'Бренд / Brand', key: 'brand', width: 15 },
-      { header: 'Коллекция / Collection', key: 'collection', width: 20 },
-      { header: 'Возраст / Size Range', key: 'age_group', width: 12 },
-      { header: 'Тип посадки / Fit Type', key: 'fit_type', width: 15 },
-      { header: 'Основной материал / Main Material', key: 'main_material', width: 25 },
-      { header: 'Тип ткани / Fabric Type', key: 'fabric_type', width: 20 },
-      { header: 'Граммаж / GSM', key: 'gsm', width: 12 },
-      { header: 'Материал верха / Shell Fabric', key: 'shell_fabric', width: 25 },
-      { header: 'Материал подкладки / Lining', key: 'lining', width: 25 },
-      { header: 'Подкладка капюшона / Hood Lining', key: 'hood_lining', width: 25 },
-      { header: 'Утеплитель / Padding', key: 'padding', width: 25 },
-      { header: 'Цвет Pantone / Color Pantone', key: 'pantone', width: 20 },
-      { header: 'Название цвета / Color Name', key: 'color_name', width: 20 },
-      { header: 'Поставщик / Supplier', key: 'supplier', width: 20 },
-      { header: 'Номер прототипа / Prototype', key: 'prototype', width: 15 },
-      { header: 'Дата создания / Date', key: 'date_created', width: 15 }
+      { header: 'Date of creation', key: 'date_created', width: 15 },
+      { header: 'Type of product', key: 'product_type', width: 20 },
+      { header: 'Supplier', key: 'supplier', width: 20 },
+      { header: 'Sub-Category 款式', key: 'category', width: 20 },
+      { header: 'Retail Group', key: 'product_group', width: 20 },
+      { header: 'Photos 款式照片', key: 'sketch', width: 15 },
+      { header: 'Model number', key: 'model_number', width: 18 },
+      { header: 'Color Pantone TCX', key: 'pantone', width: 20 },
+      { header: 'Color description', key: 'color_name', width: 20 },
+      { header: 'Gender\n性别', key: 'gender', width: 12 },
+      { header: 'Fit Type', key: 'fit_type', width: 15 },
+      { header: 'Main material', key: 'main_material', width: 25 },
+      { header: 'Hood lining', key: 'hood_lining', width: 25 },
+      { header: 'Type of fabric', key: 'fabric_type', width: 20 },
+      { header: 'FABRIC WEIGHT\n(GSM)', key: 'gsm', width: 12 },
+      { header: 'Shell fabric', key: 'shell_fabric', width: 25 },
+      { header: 'Lining', key: 'lining', width: 25 },
+      { header: 'Padding', key: 'padding', width: 25 },
+      { header: 'SIZE Range', key: 'age_group', width: 12 },
+      { header: 'Brands', key: 'brand', width: 15 },
+      { header: 'Collection', key: 'collection', width: 20 },
+      { header: 'Prototype number', key: 'prototype', width: 15 }
     ];
 
     // Style header row
@@ -273,7 +272,7 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
             });
 
             worksheet.addImage(imageId, {
-              tl: { col: 0, row: rowIndex - 1 },
+              tl: { col: 5, row: rowIndex - 1 }, // col 5 = Photos column (6th column, 0-indexed)
               ext: { width: 90, height: 75 }
             });
           }
