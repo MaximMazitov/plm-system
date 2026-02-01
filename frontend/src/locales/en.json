@@ -57,7 +57,8 @@
     "designer": "Designer",
     "constructor": "Constructor",
     "china_office": "China Office",
-    "factory": "Factory"
+    "factory": "Factory",
+    "admin": "Administrator"
   },
   "statuses": {
     "draft": "Draft",
@@ -352,7 +353,11 @@
     "factoryCreateError": "Failed to create factory",
     "factoryUpdateError": "Failed to update factory",
     "factoryNamePlaceholder": "Factory name",
-    "addressPlaceholder": "Factory address"
+    "addressPlaceholder": "Factory address",
+    "users": "Users",
+    "noUsers": "No users",
+    "role": "Role",
+    "editWechatId": "Edit WeChat ID"
   },
   "permissions": {
     "dashboard": "Dashboard",

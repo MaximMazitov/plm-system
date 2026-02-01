@@ -22,6 +22,8 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
         full_name,
         role,
         is_active,
+        wechat_id,
+        factory_id,
         created_at
       FROM users
       ORDER BY created_at DESC`
@@ -52,7 +54,7 @@ export const createUser = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const { email, password, full_name, role, permissions } = req.body;
+    const { email, password, full_name, role, permissions, wechat_id, factory_id } = req.body;
 
     // Validate input
     if (!email || !password || !full_name || !role) {
@@ -63,11 +65,19 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     }
 
     // Validate role
-    const validRoles = ['designer', 'constructor', 'buyer', 'china_office'];
+    const validRoles = ['designer', 'constructor', 'buyer', 'china_office', 'factory'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid role'
+      });
+    }
+
+    // Factory role requires factory_id
+    if (role === 'factory' && !factory_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Factory ID is required for factory role'
       });
     }
 
@@ -89,10 +99,10 @@ export const createUser = async (req: AuthRequest, res: Response) => {
 
     // Create user
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, full_name, role, is_active)
-       VALUES ($1, $2, $3, $4, true)
-       RETURNING id, email, full_name, role, is_active, created_at`,
-      [email, hashedPassword, full_name, role]
+      `INSERT INTO users (email, password_hash, full_name, role, is_active, wechat_id, factory_id)
+       VALUES ($1, $2, $3, $4, true, $5, $6)
+       RETURNING id, email, full_name, role, is_active, wechat_id, factory_id, created_at`,
+      [email, hashedPassword, full_name, role, wechat_id || null, factory_id || null]
     );
 
     const newUser = result.rows[0];
@@ -194,7 +204,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     }
 
     const { userId } = req.params;
-    const { full_name, role, is_active, password, permissions } = req.body;
+    const { full_name, role, is_active, password, permissions, wechat_id, factory_id } = req.body;
 
     // Check if user exists
     const userCheck = await pool.query(
@@ -211,7 +221,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     // Validate role if provided
     if (role) {
-      const validRoles = ['designer', 'constructor', 'buyer', 'china_office'];
+      const validRoles = ['designer', 'constructor', 'buyer', 'china_office', 'factory'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({
           success: false,
@@ -246,6 +256,16 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
       values.push(hashedPassword);
     }
 
+    if (wechat_id !== undefined) {
+      updates.push(`wechat_id = $${paramIndex++}`);
+      values.push(wechat_id || null);
+    }
+
+    if (factory_id !== undefined) {
+      updates.push(`factory_id = $${paramIndex++}`);
+      values.push(factory_id || null);
+    }
+
     if (updates.length === 0 && !permissions) {
       return res.status(400).json({
         success: false,
@@ -262,7 +282,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         UPDATE users
         SET ${updates.join(', ')}
         WHERE id = $${paramIndex}
-        RETURNING id, email, full_name, role, is_active, created_at, updated_at
+        RETURNING id, email, full_name, role, is_active, wechat_id, factory_id, created_at, updated_at
       `;
 
       const result = await pool.query(query, values);

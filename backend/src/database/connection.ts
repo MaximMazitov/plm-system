@@ -112,7 +112,30 @@ const ensureTables = async () => {
         -- Update default values for existing columns
         ALTER TABLE models ALTER COLUMN buyer_approval SET DEFAULT 'pending';
         ALTER TABLE models ALTER COLUMN constructor_approval SET DEFAULT 'pending';
+
+        -- Add wechat_id to users table for WeChat notifications
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='wechat_id') THEN
+          ALTER TABLE users ADD COLUMN wechat_id VARCHAR(100);
+        END IF;
       END $$;
+    `);
+
+    // Create notifications table for tracking sent notifications
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        model_id INTEGER REFERENCES models(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        notification_type VARCHAR(50) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed', 'read')),
+        title VARCHAR(255),
+        message TEXT,
+        wechat_msg_id VARCHAR(100),
+        error_message TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        sent_at TIMESTAMP,
+        read_at TIMESTAMP
+      )
     `);
 
     console.log('Database tables verified/created');

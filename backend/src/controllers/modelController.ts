@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import pool from '../database/connection';
 import { AuthRequest } from '../middleware/auth';
+import { notificationService } from '../services/notificationService';
 
 export const createModel = async (req: AuthRequest, res: Response) => {
   const client = await pool.connect();
@@ -353,13 +354,20 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
       [model_name, product_type, category, fit_type, finalProductGroup, finalProductGroupCode, status, id]
     );
 
-    // Log status change
+    // Log status change and send notifications
     if (status && status !== currentModel.status) {
       await pool.query(
         `INSERT INTO status_history (model_id, from_status, to_status, changed_by)
          VALUES ($1, $2, $3, $4)`,
         [id, currentModel.status, status, userId]
       );
+
+      // Send WeChat notifications asynchronously (don't wait for response)
+      notificationService.sendStatusChangeNotifications(
+        Number(id),
+        status,
+        userId
+      ).catch(err => console.error('Notification error:', err));
     }
 
     return res.status(200).json({
@@ -493,6 +501,14 @@ export const updateBuyerApproval = async (req: AuthRequest, res: Response) => {
       [id, userId, `Buyer approval: ${approval_status}`]
     );
 
+    // Send WeChat notifications for approval changes
+    notificationService.sendApprovalNotification(
+      Number(id),
+      'buyer',
+      approval_status,
+      comment
+    ).catch(err => console.error('Approval notification error:', err));
+
     return res.json({
       success: true,
       data: result.rows[0]
@@ -543,6 +559,14 @@ export const updateConstructorApproval = async (req: AuthRequest, res: Response)
        VALUES ($1, $2, 'constructor_approval', $3)`,
       [id, userId, `Constructor approval: ${approval_status}`]
     );
+
+    // Send WeChat notifications for approval changes
+    notificationService.sendApprovalNotification(
+      Number(id),
+      'constructor',
+      approval_status,
+      comment
+    ).catch(err => console.error('Approval notification error:', err));
 
     return res.json({
       success: true,

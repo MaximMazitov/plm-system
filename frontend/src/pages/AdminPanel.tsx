@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { ChevronLeft, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { ChevronLeft, Plus, Edit2, Trash2, Save, X, MessageCircle } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -26,6 +26,17 @@ interface Factory {
   created_at: string;
 }
 
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  wechat_id?: string;
+  factory_id?: number;
+  created_at: string;
+}
+
 interface ReferenceDataByCategory {
   [key: string]: ReferenceDataItem[];
 }
@@ -38,14 +49,17 @@ export const AdminPanel = () => {
     product_type: t('admin.productType'),
     fit_type: t('admin.fitType'),
     product_group: t('admin.productGroup'),
-    factories: t('admin.factories')
+    factories: t('admin.factories'),
+    users: t('admin.users')
   };
   const [referenceData, setReferenceData] = useState<ReferenceDataByCategory>({});
   const [factories, setFactories] = useState<Factory[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('product_type');
   const [isLoading, setIsLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<ReferenceDataItem | null>(null);
   const [editingFactory, setEditingFactory] = useState<Factory | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newItem, setNewItem] = useState({
     code: '',
@@ -73,6 +87,7 @@ export const AdminPanel = () => {
   useEffect(() => {
     loadReferenceData();
     loadFactories();
+    loadUsers();
   }, []);
 
   const loadReferenceData = async () => {
@@ -117,6 +132,26 @@ export const AdminPanel = () => {
     } catch (error) {
       console.error('Error loading factories:', error);
       toast.error(t('models.loadError'));
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load users');
+      }
+
+      const data = await response.json();
+      setUsers(data.data || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
     }
   };
 
@@ -331,6 +366,46 @@ export const AdminPanel = () => {
     setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' });
   };
 
+  // User update (WeChat ID)
+  const handleUpdateUser = async (user: User) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          wechat_id: user.wechat_id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+
+      toast.success(t('admin.recordUpdated'));
+      setEditingUser(null);
+      await loadUsers();
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast.error(t('common.error'));
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    const roleLabels: { [key: string]: string } = {
+      buyer: t('roles.buyer'),
+      designer: t('roles.designer'),
+      constructor: t('roles.constructor'),
+      china_office: t('roles.chinaOffice'),
+      factory: t('roles.factory'),
+      admin: t('roles.admin')
+    };
+    return roleLabels[role] || role;
+  };
+
   const handleDeleteConfirm = () => {
     if (deleteConfirm.type === 'item') {
       handleDelete();
@@ -393,6 +468,7 @@ export const AdminPanel = () => {
                     setIsCreating(false);
                     setEditingItem(null);
                     setEditingFactory(null);
+                    setEditingUser(null);
                   }}
                   className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                     selectedCategory === category
@@ -402,7 +478,7 @@ export const AdminPanel = () => {
                 >
                   {categoryLabels[category]}
                   <span className="ml-2 text-sm text-gray-500">
-                    ({category === 'factories' ? factories.length : (referenceData[category]?.length || 0)})
+                    ({category === 'factories' ? factories.length : category === 'users' ? users.length : (referenceData[category]?.length || 0)})
                   </span>
                 </button>
               ))}
@@ -415,17 +491,19 @@ export const AdminPanel = () => {
               <h2 className="text-xl font-semibold text-gray-900">
                 {categoryLabels[selectedCategory]}
               </h2>
-              <button
-                onClick={() => {
-                  setIsCreating(true);
-                  setEditingItem(null);
-                  setEditingFactory(null);
-                }}
-                className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {t('common.add')}
-              </button>
+              {selectedCategory !== 'users' && (
+                <button
+                  onClick={() => {
+                    setIsCreating(true);
+                    setEditingItem(null);
+                    setEditingFactory(null);
+                  }}
+                  className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t('common.add')}
+                </button>
+              )}
             </div>
 
             <div className="p-6">
@@ -637,6 +715,131 @@ export const AdminPanel = () => {
                                       className="inline-flex items-center px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
                                     >
                                       <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              ) : selectedCategory === 'users' ? (
+                <>
+                  {/* Users table - WeChat ID management */}
+                  {users.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      {t('admin.noUsers')}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                              {t('common.name')}
+                            </th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                              {t('admin.contactEmail')}
+                            </th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                              {t('admin.role')}
+                            </th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                              <div className="flex items-center gap-1">
+                                <MessageCircle className="w-4 h-4" />
+                                WeChat ID
+                              </div>
+                            </th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                              {t('common.status')}
+                            </th>
+                            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
+                              {t('common.actions')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {users.map((user) => (
+                            <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              {editingUser?.id === user.id ? (
+                                <>
+                                  <td className="py-3 px-4 text-sm text-gray-900">{user.full_name}</td>
+                                  <td className="py-3 px-4 text-sm text-gray-600">{user.email}</td>
+                                  <td className="py-3 px-4 text-sm text-gray-600">{getRoleLabel(user.role)}</td>
+                                  <td className="py-3 px-4">
+                                    <input
+                                      type="text"
+                                      value={editingUser.wechat_id || ''}
+                                      onChange={(e) =>
+                                        setEditingUser({ ...editingUser, wechat_id: e.target.value })
+                                      }
+                                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      placeholder="WeChat User ID"
+                                    />
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                                      user.is_active
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                      {user.is_active ? t('admin.active') : t('admin.inactive')}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4 text-right">
+                                    <button
+                                      onClick={() => handleUpdateUser(editingUser)}
+                                      className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded mr-2"
+                                    >
+                                      <Save className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingUser(null)}
+                                      className="inline-flex items-center px-3 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="py-3 px-4 text-sm text-gray-900">{user.full_name}</td>
+                                  <td className="py-3 px-4 text-sm text-gray-600">{user.email}</td>
+                                  <td className="py-3 px-4 text-sm text-gray-600">{getRoleLabel(user.role)}</td>
+                                  <td className="py-3 px-4 text-sm">
+                                    {user.wechat_id ? (
+                                      <span className="inline-flex items-center gap-1 text-green-600">
+                                        <MessageCircle className="w-4 h-4" />
+                                        {user.wechat_id}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400">—</span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                                      user.is_active
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                      {user.is_active ? t('admin.active') : t('admin.inactive')}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4 text-right">
+                                    <button
+                                      onClick={() => {
+                                        setEditingUser(user);
+                                        setIsCreating(false);
+                                        setEditingFactory(null);
+                                        setEditingItem(null);
+                                      }}
+                                      className="inline-flex items-center px-3 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                                      title={t('admin.editWechatId')}
+                                    >
+                                      <Edit2 className="w-4 h-4" />
                                     </button>
                                   </td>
                                 </>

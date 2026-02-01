@@ -57,7 +57,8 @@
     "designer": "Дизайнер",
     "constructor": "Конструктор",
     "china_office": "China Office",
-    "factory": "Фабрика"
+    "factory": "Фабрика",
+    "admin": "Администратор"
   },
   "statuses": {
     "draft": "Черновик",
@@ -352,7 +353,11 @@
     "factoryCreateError": "Не удалось создать фабрику",
     "factoryUpdateError": "Не удалось обновить фабрику",
     "factoryNamePlaceholder": "Название фабрики",
-    "addressPlaceholder": "Адрес фабрики"
+    "addressPlaceholder": "Адрес фабрики",
+    "users": "Пользователи",
+    "noUsers": "Нет пользователей",
+    "role": "Роль",
+    "editWechatId": "Редактировать WeChat ID"
   },
   "permissions": {
     "dashboard": "Dashboard",
