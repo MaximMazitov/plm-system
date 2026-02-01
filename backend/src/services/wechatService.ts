@@ -80,7 +80,7 @@ class WeChatService {
     try {
       const url = `${this.baseUrl}/gettoken?corpid=${this.corpId}&corpsecret=${this.secret}`;
       const response = await fetch(url);
-      const data: WeChatTokenResponse = await response.json();
+      const data = await response.json() as WeChatTokenResponse;
 
       if (data.errcode === 0 && data.access_token) {
         this.accessToken = data.access_token;
@@ -134,7 +134,7 @@ class WeChatService {
         }
       );
 
-      const data: WeChatMessageResponse = await response.json();
+      const data = await response.json() as WeChatMessageResponse;
 
       if (data.errcode === 0) {
         return { success: true, msgId: data.msgid };
@@ -177,7 +177,7 @@ class WeChatService {
         }
       );
 
-      const data: WeChatMessageResponse = await response.json();
+      const data = await response.json() as WeChatMessageResponse;
 
       if (data.errcode === 0) {
         return { success: true, msgId: data.msgid };
