@@ -10,7 +10,7 @@
  */
 
 import pool from '../database/connection';
-import { wechatService } from './wechatService';
+import { emailService } from './emailService';
 
 // Типы статусов моделей
 type ModelStatus = 'draft' | 'approved' | 'ds_stage' | 'pps_stage' | 'in_production' | 'shipped';
@@ -39,7 +39,7 @@ interface ModelInfo {
 
 interface NotificationRecipient {
   user_id: number;
-  wechat_id: string;
+  email: string;
   full_name: string;
   role: UserRole;
 }
@@ -94,17 +94,17 @@ class NotificationService {
       if (role === 'factory' && factoryId) {
         // Для фабрики - получаем пользователей конкретной фабрики
         query = `
-          SELECT id as user_id, wechat_id, full_name, role
+          SELECT id as user_id, email, full_name, role
           FROM users
-          WHERE role = 'factory' AND factory_id = $1 AND wechat_id IS NOT NULL AND wechat_id != ''
+          WHERE role = 'factory' AND factory_id = $1 AND email IS NOT NULL AND email != ''
         `;
         params = [factoryId];
       } else {
         // Для остальных ролей - все пользователи с этой ролью
         query = `
-          SELECT id as user_id, wechat_id, full_name, role
+          SELECT id as user_id, email, full_name, role
           FROM users
-          WHERE role = $1 AND wechat_id IS NOT NULL AND wechat_id != ''
+          WHERE role = $1 AND email IS NOT NULL AND email != ''
         `;
         params = [role];
       }
@@ -122,12 +122,12 @@ class NotificationService {
    */
   private getStatusLabel(status: ModelStatus): string {
     const labels: Record<ModelStatus, string> = {
-      draft: '草稿 / Черновик',
-      approved: '已批准 / Одобрено',
-      ds_stage: 'DS阶段 / DS этап',
-      pps_stage: 'PPS阶段 / PPS этап',
-      in_production: '生产中 / В производстве',
-      shipped: '已发货 / Отгружено'
+      draft: 'Черновик',
+      approved: 'Одобрено',
+      ds_stage: 'DS этап',
+      pps_stage: 'PPS этап',
+      in_production: 'В производстве',
+      shipped: 'Отгружено'
     };
     return labels[status] || status;
   }
@@ -142,7 +142,7 @@ class NotificationService {
     title: string,
     message: string,
     status: 'pending' | 'sent' | 'failed',
-    wechatMsgId?: string,
+    emailMsgId?: string,
     errorMessage?: string
   ): Promise<number | null> {
     try {
@@ -152,7 +152,7 @@ class NotificationService {
           wechat_msg_id, error_message, sent_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ${status === 'sent' ? 'CURRENT_TIMESTAMP' : 'NULL'})
         RETURNING id
-      `, [modelId, userId, notificationType, status, title, message, wechatMsgId || null, errorMessage || null]);
+      `, [modelId, userId, notificationType, status, title, message, emailMsgId || null, errorMessage || null]);
 
       return result.rows[0]?.id || null;
     } catch (error) {
@@ -171,9 +171,9 @@ class NotificationService {
   ): Promise<{ sent: number; failed: number; skipped: number }> {
     const result = { sent: 0, failed: 0, skipped: 0 };
 
-    // Проверяем, настроен ли WeChat
-    if (!wechatService.isConfigured()) {
-      console.log('WeChat not configured, skipping notifications');
+    // Проверяем, настроен ли Email сервис
+    if (!emailService.isConfigured()) {
+      console.log('Email service not configured, skipping notifications');
       return result;
     }
 
@@ -210,28 +210,30 @@ class NotificationService {
       : uniqueRecipients;
 
     if (finalRecipients.length === 0) {
-      console.log('No recipients with WeChat ID found');
+      console.log('No recipients with email found');
       return result;
     }
 
     // Формируем сообщение
-    const title = `模型状态更新 / Обновление статуса модели`;
+    const title = `Обновление статуса модели`;
     const statusLabel = this.getStatusLabel(newStatus);
-    const description = `模型: ${modelInfo.model_number} - ${modelInfo.model_name || 'N/A'}\n` +
-                       `系列: ${modelInfo.collection_name || 'N/A'}\n` +
-                       `新状态: ${statusLabel}`;
+    const description = `Модель: ${modelInfo.model_number} - ${modelInfo.model_name || 'N/A'}\n` +
+                       `Коллекция: ${modelInfo.collection_name || 'N/A'}\n` +
+                       `Новый статус: ${statusLabel}`;
     const modelUrl = `${this.frontendUrl}/models/${modelId}`;
-    const buttonText = '查看详情';
 
     // Отправляем уведомления каждому получателю
     for (const recipient of finalRecipients) {
       try {
-        const sendResult = await wechatService.sendCardMessage(
-          recipient.wechat_id,
-          title,
-          description,
-          modelUrl,
-          buttonText
+        const sendResult = await emailService.sendStatusChangeEmail(
+          recipient.email,
+          recipient.full_name,
+          modelInfo.model_number,
+          modelInfo.model_name,
+          modelInfo.collection_name,
+          newStatus,
+          statusLabel,
+          modelUrl
         );
 
         if (sendResult.success) {
@@ -242,10 +244,10 @@ class NotificationService {
             title,
             description,
             'sent',
-            sendResult.msgId
+            sendResult.messageId
           );
           result.sent++;
-          console.log(`Notification sent to ${recipient.full_name} (${recipient.role})`);
+          console.log(`Email notification sent to ${recipient.full_name} (${recipient.email})`);
         } else {
           await this.logNotification(
             modelId,
@@ -258,7 +260,7 @@ class NotificationService {
             sendResult.error
           );
           result.failed++;
-          console.error(`Failed to send to ${recipient.full_name}: ${sendResult.error}`);
+          console.error(`Failed to send email to ${recipient.full_name}: ${sendResult.error}`);
         }
       } catch (error: any) {
         await this.logNotification(
@@ -272,11 +274,11 @@ class NotificationService {
           error.message
         );
         result.failed++;
-        console.error(`Exception sending to ${recipient.full_name}:`, error);
+        console.error(`Exception sending email to ${recipient.full_name}:`, error);
       }
     }
 
-    console.log(`Notifications result: sent=${result.sent}, failed=${result.failed}, skipped=${result.skipped}`);
+    console.log(`Email notifications result: sent=${result.sent}, failed=${result.failed}, skipped=${result.skipped}`);
     return result;
   }
 
@@ -289,7 +291,7 @@ class NotificationService {
     approvalStatus: string,
     comment?: string
   ): Promise<void> {
-    if (!wechatService.isConfigured()) return;
+    if (!emailService.isConfigured()) return;
 
     const modelInfo = await this.getModelInfo(modelId);
     if (!modelInfo) return;
@@ -313,34 +315,28 @@ class NotificationService {
     if (uniqueRecipients.length === 0) return;
 
     const approvalLabels: Record<string, string> = {
-      approved: '已批准 / Одобрено',
-      approved_with_comments: '有意见批准 / Одобрено с комментариями',
-      not_approved: '未批准 / Не одобрено',
-      pending: '待定 / Ожидает'
+      approved: 'Одобрено',
+      approved_with_comments: 'Одобрено с комментариями',
+      not_approved: 'Не одобрено',
+      pending: 'Ожидает'
     };
 
-    const roleLabels = {
-      buyer: '采购员 / Байер',
-      constructor: '设计师 / Конструктор'
-    };
-
-    const title = `审批更新 / Обновление согласования`;
-    const description = `模型: ${modelInfo.model_number}\n` +
-                       `${roleLabels[approvalType]}: ${approvalLabels[approvalStatus] || approvalStatus}\n` +
-                       (comment ? `评论: ${comment}` : '');
     const modelUrl = `${this.frontendUrl}/models/${modelId}`;
 
     for (const recipient of uniqueRecipients) {
       try {
-        await wechatService.sendCardMessage(
-          recipient.wechat_id,
-          title,
-          description,
-          modelUrl,
-          '查看详情'
+        await emailService.sendApprovalEmail(
+          recipient.email,
+          recipient.full_name,
+          modelInfo.model_number,
+          approvalType,
+          approvalStatus,
+          approvalLabels[approvalStatus] || approvalStatus,
+          comment,
+          modelUrl
         );
       } catch (error) {
-        console.error(`Failed to send approval notification to ${recipient.full_name}:`, error);
+        console.error(`Failed to send approval email to ${recipient.full_name}:`, error);
       }
     }
   }
