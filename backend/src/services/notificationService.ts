@@ -12,19 +12,21 @@
 import pool from '../database/connection';
 import { emailService } from './emailService';
 
-// Типы статусов моделей
-type ModelStatus = 'draft' | 'approved' | 'ds_stage' | 'pps_stage' | 'in_production' | 'shipped';
+// Статусы моделей обрабатываются как string для гибкости с разными форматами из БД
 
 // Типы ролей пользователей
 type UserRole = 'admin' | 'buyer' | 'designer' | 'constructor' | 'china_office' | 'factory';
 
-// Кого уведомлять при каком статусе
-const STATUS_NOTIFICATION_RULES: Record<ModelStatus, UserRole[]> = {
+// Кого уведомлять при каком статусе (включая короткие варианты)
+const STATUS_NOTIFICATION_RULES: Record<string, UserRole[]> = {
   draft: [],
   approved: ['china_office'],
   ds_stage: ['china_office', 'factory'],
+  ds: ['china_office', 'factory'],
   pps_stage: ['constructor', 'buyer'],
+  pps: ['constructor', 'buyer'],
   in_production: ['factory', 'china_office'],
+  production: ['factory', 'china_office'],
   shipped: []
 };
 
@@ -120,13 +122,16 @@ class NotificationService {
   /**
    * Переводит статус в читаемый текст
    */
-  private getStatusLabel(status: ModelStatus): string {
-    const labels: Record<ModelStatus, string> = {
+  private getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
       draft: 'Черновик',
       approved: 'Одобрено',
       ds_stage: 'DS этап',
+      ds: 'DS этап',
       pps_stage: 'PPS этап',
+      pps: 'PPS этап',
       in_production: 'В производстве',
+      production: 'В производстве',
       shipped: 'Отгружено'
     };
     return labels[status] || status;
@@ -166,7 +171,7 @@ class NotificationService {
    */
   async sendStatusChangeNotifications(
     modelId: number,
-    newStatus: ModelStatus,
+    newStatus: string,
     changedByUserId?: number
   ): Promise<{ sent: number; failed: number; skipped: number }> {
     const result = { sent: 0, failed: 0, skipped: 0 };

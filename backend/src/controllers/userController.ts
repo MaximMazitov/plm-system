@@ -204,7 +204,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     }
 
     const { userId } = req.params;
-    const { full_name, role, is_active, password, permissions, wechat_id, factory_id } = req.body;
+    const { email, full_name, role, is_active, password, permissions, wechat_id, factory_id } = req.body;
 
     // Check if user exists
     const userCheck = await pool.query(
@@ -234,6 +234,11 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
+
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
 
     if (full_name !== undefined) {
       updates.push(`full_name = $${paramIndex++}`);
