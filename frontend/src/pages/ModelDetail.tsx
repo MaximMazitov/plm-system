@@ -71,7 +71,6 @@ export const ModelDetail = () => {
   const [productGroups, setProductGroups] = useState<Array<{value: string, label: string, code?: string}>>([]);
   const [isEditingProductGroup, setIsEditingProductGroup] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState('');
-  const [selectedProductGroupCode, setSelectedProductGroupCode] = useState('');
   const [editingMaterial, setEditingMaterial] = useState<{ type: string; name: string; fabric_type: string; fabric_weight_gsm: string } | null>(null);
   const [showDeleteFileModal, setShowDeleteFileModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<{ id: number; name: string } | null>(null);
@@ -259,6 +258,8 @@ export const ModelDetail = () => {
   const updateProductGroup = async () => {
     try {
       const token = localStorage.getItem('token');
+      // Find the selected group to get both label (name) and code
+      const selectedGroup = productGroups.find(g => g.value === selectedProductGroup);
       const response = await fetch(`${API_BASE_URL}/models/${id}`, {
         method: 'PATCH',
         headers: {
@@ -266,8 +267,9 @@ export const ModelDetail = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          product_group: selectedProductGroup || null,
-          product_group_code: selectedProductGroupCode || null
+          // Save label (name) to product_group, code to product_group_code
+          product_group: selectedGroup?.label || null,
+          product_group_code: selectedGroup?.code || null
         })
       });
 
@@ -1406,12 +1408,7 @@ export const ModelDetail = () => {
                     <div className="mt-1 space-y-2">
                       <select
                         value={selectedProductGroup}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setSelectedProductGroup(value);
-                          const selected = productGroups.find(g => g.value === value);
-                          setSelectedProductGroupCode(selected?.code || '');
-                        }}
+                        onChange={(e) => setSelectedProductGroup(e.target.value)}
                         className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
                         <option value="">{t('modelDetail.notSelected')}</option>
@@ -1431,8 +1428,9 @@ export const ModelDetail = () => {
                         <button
                           onClick={() => {
                             setIsEditingProductGroup(false);
-                            setSelectedProductGroup(model.product_group || '');
-                            setSelectedProductGroupCode(model.product_group_code || '');
+                            // Find group by label (name) to restore the value for select
+                            const currentGroup = productGroups.find(g => g.label === model.product_group);
+                            setSelectedProductGroup(currentGroup?.value || '');
                           }}
                           className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                         >
@@ -1443,13 +1441,14 @@ export const ModelDetail = () => {
                   ) : (
                     <div className="mt-1 flex items-center gap-2">
                       <p className="text-sm font-medium text-gray-900 flex-1">
-                        {productGroups.find(g => g.value === model.product_group)?.label || '—'}
+                        {model.product_group || '—'}
                       </p>
                       {hasPermission('can_edit_models') && !isEditMode && (
                         <button
                           onClick={() => {
-                            setSelectedProductGroup(model.product_group || '');
-                            setSelectedProductGroupCode(model.product_group_code || '');
+                            // Find group by label (name) to get the value for select
+                            const currentGroup = productGroups.find(g => g.label === model.product_group);
+                            setSelectedProductGroup(currentGroup?.value || '');
                             setIsEditingProductGroup(true);
                           }}
                           className="text-xs text-primary-600 hover:text-primary-700"
@@ -1460,8 +1459,9 @@ export const ModelDetail = () => {
                       {isEditMode && (
                         <button
                           onClick={() => {
-                            setSelectedProductGroup(model.product_group || '');
-                            setSelectedProductGroupCode(model.product_group_code || '');
+                            // Find group by label (name) to get the value for select
+                            const currentGroup = productGroups.find(g => g.label === model.product_group);
+                            setSelectedProductGroup(currentGroup?.value || '');
                             setIsEditingProductGroup(true);
                           }}
                           className="text-primary-600 hover:text-primary-700"
@@ -1476,10 +1476,7 @@ export const ModelDetail = () => {
                 <div>
                   <label className="text-sm text-gray-600">{t('models.productGroupCode')}</label>
                   <p className="text-sm font-medium text-gray-900 mt-1">
-                    {model.product_group
-                      ? (model.product_group_code || productGroups.find(g => g.value === model.product_group)?.code || '—')
-                      : '—'
-                    }
+                    {model.product_group_code || '—'}
                   </p>
                 </div>
 
