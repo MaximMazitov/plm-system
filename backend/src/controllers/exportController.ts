@@ -91,7 +91,8 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
         m.status,
         m.created_at,
         c.name as collection_name,
-        c.type as gender,
+        c.type as collection_type,
+        c.gender as kids_gender,
         c.age_group,
         s.name as season_name,
         f.name as supplier_name,
@@ -171,7 +172,8 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
       { header: 'Type of product', key: 'product_type', width: 20 },
       { header: 'Supplier', key: 'supplier', width: 20 },
       { header: 'Sub-Category 款式', key: 'category', width: 20 },
-      { header: 'Retail Group', key: 'product_group', width: 20 },
+      { header: 'Retail Group', key: 'product_group', width: 25 },
+      { header: 'Group Code', key: 'product_group_code', width: 12 },
       { header: 'Photos 款式照片', key: 'sketch', width: 15 },
       { header: 'Model number', key: 'model_number', width: 18 },
       { header: 'Color Pantone TCX', key: 'pantone', width: 20 },
@@ -219,16 +221,17 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
       const pantoneList = colors.map(c => c.pantone_code).join(', ');
       const colorNameList = colors.map(c => c.color_name).filter(Boolean).join(', ');
 
-      // Translate gender
-      let genderLabel = model.gender;
-      if (model.gender === 'kids') {
-        if (model.age_group === 'girls' || model.age_group === 'девочки') genderLabel = 'Girls';
-        else if (model.age_group === 'boys' || model.age_group === 'мальчики') genderLabel = 'Boys';
-        else if (model.age_group === 'newborn' || model.age_group === 'новорожденные') genderLabel = 'Newborn';
+      // Translate gender - use kids_gender (boys/girls/babies) for kids collection
+      let genderLabel = model.collection_type;
+      if (model.collection_type === 'kids') {
+        // Use c.gender which contains boys/girls/babies
+        if (model.kids_gender === 'girls') genderLabel = 'Girls';
+        else if (model.kids_gender === 'boys') genderLabel = 'Boys';
+        else if (model.kids_gender === 'babies') genderLabel = 'Babies';
         else genderLabel = 'Kids';
-      } else if (model.gender === 'women') {
+      } else if (model.collection_type === 'women') {
         genderLabel = 'Women';
-      } else if (model.gender === 'men') {
+      } else if (model.collection_type === 'men') {
         genderLabel = 'Men';
       }
 
@@ -272,7 +275,7 @@ export const exportModelsToExcel = async (req: AuthRequest, res: Response): Prom
             });
 
             worksheet.addImage(imageId, {
-              tl: { col: 5, row: rowIndex - 1 }, // col 5 = Photos column (6th column, 0-indexed)
+              tl: { col: 6, row: rowIndex - 1 }, // col 6 = Photos column (7th column, 0-indexed)
               ext: { width: 90, height: 75 }
             });
           }
