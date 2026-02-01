@@ -61,14 +61,14 @@
     "admin": "Администратор"
   },
   "statuses": {
-    "draft": "Черновик",
-    "under_review": "На проверке",
-    "approved": "Утвержден",
+    "draft": "Draft",
+    "under_review": "Under Review",
+    "approved": "Approved",
     "ds_stage": "DS Stage",
     "pps_stage": "PPS Stage",
-    "in_production": "В производстве",
-    "shipped": "Отгружен",
-    "rejected": "Отклонен"
+    "in_production": "In Production",
+    "shipped": "Shipped",
+    "rejected": "Rejected"
   },
   "dashboard": {
     "title": "Dashboard",
