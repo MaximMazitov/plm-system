@@ -151,10 +151,14 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const imageFiles = req.files as Express.Multer.File[] | undefined;
 
-    if (!comment_text || !comment_text.trim()) {
+    // Allow comment with just files (no text required)
+    const hasFiles = imageFiles && imageFiles.length > 0;
+    const hasText = comment_text && comment_text.trim();
+
+    if (!hasText && !hasFiles) {
       return res.status(400).json({
         success: false,
-        error: 'Comment text is required'
+        error: 'Comment must have text or files'
       });
     }
 
@@ -187,11 +191,12 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
     }
 
     // Insert comment first (without files for backwards compatibility)
+    const commentTextValue = hasText ? comment_text.trim() : '';
     const result = await pool.query(
       `INSERT INTO comments (model_id, user_id, parent_id, comment_text)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [modelId, userId, parent_id || null, comment_text.trim()]
+      [modelId, userId, parent_id || null, commentTextValue]
     );
 
     const commentId = result.rows[0].id;
