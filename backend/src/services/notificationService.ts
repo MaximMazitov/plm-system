@@ -20,6 +20,7 @@ type UserRole = 'admin' | 'buyer' | 'designer' | 'constructor' | 'china_office' 
 // Кого уведомлять при каком статусе (включая короткие варианты)
 const STATUS_NOTIFICATION_RULES: Record<string, UserRole[]> = {
   draft: [],
+  under_review: ['constructor', 'buyer'],
   approved: ['china_office'],
   ds_stage: ['china_office', 'factory'],
   ds: ['china_office', 'factory'],
@@ -125,6 +126,7 @@ class NotificationService {
   private getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
       draft: 'Черновик',
+      under_review: 'На рассмотрении',
       approved: 'Одобрено',
       ds_stage: 'DS этап',
       ds: 'DS этап',
