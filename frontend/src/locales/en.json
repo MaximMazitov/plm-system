@@ -4,6 +4,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "deleting": "Deleting...",
     "edit": "Edit",
     "add": "Add",
     "back": "Back",
@@ -264,7 +265,9 @@
     "change": "Change",
     "deleteFileTitle": "Delete File",
     "deleteFileMessage": "Are you sure you want to delete file",
-    "cannotUndo": "This action cannot be undone."
+    "cannotUndo": "This action cannot be undone.",
+    "deleteModelTitle": "Delete Model",
+    "deleteModelMessage": "Are you sure you want to delete model"
   },
   "approval": {
     "status": "Status",

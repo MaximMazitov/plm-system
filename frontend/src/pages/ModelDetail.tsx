@@ -94,6 +94,8 @@ export const ModelDetail = () => {
   const [newColor, setNewColor] = useState({ pantone_code: '', color_name: '', hex_color: '' });
   const [showDeleteColorModal, setShowDeleteColorModal] = useState(false);
   const [colorToDelete, setColorToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [showDeleteModelModal, setShowDeleteModelModal] = useState(false);
+  const [isDeletingModel, setIsDeletingModel] = useState(false);
 
   useEffect(() => {
     // CRITICAL: Clear all model data when navigating to a different model
@@ -418,6 +420,22 @@ export const ModelDetail = () => {
       console.error('Failed to delete file:', error);
       setShowDeleteFileModal(false);
       setFileToDelete(null);
+    }
+  };
+
+  const handleDeleteModel = async () => {
+    if (!id) return;
+
+    setIsDeletingModel(true);
+    try {
+      await modelsApi.deleteModel(parseInt(id));
+      setShowDeleteModelModal(false);
+      navigate('/models');
+    } catch (error) {
+      console.error('Failed to delete model:', error);
+      alert(t('modelDetail.deleteModelError') || 'Ошибка при удалении модели');
+    } finally {
+      setIsDeletingModel(false);
     }
   };
 
@@ -767,6 +785,16 @@ export const ModelDetail = () => {
               <Download className="w-4 h-4 mr-2" />
               {t('common.export')}
             </Button>
+            {hasPermission('can_delete_models') && (
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModelModal(true)}
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t('common.delete')}
+              </Button>
+            )}
             {hasPermission('can_edit_models') && (
               <>
                 {isEditMode ? (
@@ -2001,6 +2029,49 @@ export const ModelDetail = () => {
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
               >
                 Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Model Modal */}
+      {showDeleteModelModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setShowDeleteModelModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">{t('modelDetail.deleteModelTitle')}</h2>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              {t('modelDetail.deleteModelMessage')} <strong>{model?.model_number}</strong>? {t('modelDetail.cannotUndo')}
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModelModal(false)}
+                disabled={isDeletingModel}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors disabled:opacity-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteModel}
+                disabled={isDeletingModel}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50"
+              >
+                {isDeletingModel ? t('common.deleting') : t('common.delete')}
               </button>
             </div>
           </div>
