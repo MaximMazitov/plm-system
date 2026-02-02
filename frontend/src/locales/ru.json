@@ -190,6 +190,7 @@
   },
   "modelDetail": {
     "basicInfo": "Основная информация",
+    "productType": "Тип продукта",
     "finalSketch": "Финальный скетч",
     "techDocs": "Техническая документация",
     "artwork": "Artwork",

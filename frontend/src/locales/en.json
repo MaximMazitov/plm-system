@@ -190,6 +190,7 @@
   },
   "modelDetail": {
     "basicInfo": "Basic Information",
+    "productType": "Product Type",
     "finalSketch": "Final Sketch",
     "techDocs": "Technical Documentation",
     "artwork": "Artwork",
