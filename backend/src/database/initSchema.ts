@@ -522,6 +522,18 @@ export async function initializeSchema() {
             ALTER TABLE model_materials ADD COLUMN fabric_weight_gsm VARCHAR(50);
           END IF;
         END $$;
+
+        -- Обновляем права согласования для конструкторов
+        UPDATE user_permissions
+        SET can_approve_as_constructor = TRUE
+        WHERE user_id IN (SELECT id FROM users WHERE role = 'constructor')
+          AND can_approve_as_constructor = FALSE;
+
+        -- Обновляем права согласования для байеров
+        UPDATE user_permissions
+        SET can_approve_as_buyer = TRUE
+        WHERE user_id IN (SELECT id FROM users WHERE role = 'buyer')
+          AND can_approve_as_buyer = FALSE;
       `);
       // Seed reference data if empty
       await seedReferenceData(client);
