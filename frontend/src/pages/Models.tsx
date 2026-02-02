@@ -3,9 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
-import { Search, Filter, Plus, Package } from 'lucide-react';
+import { Search, Filter, Plus, Package, Check, X, HelpCircle, Circle } from 'lucide-react';
 import { modelsApi } from '../services/api';
-import type { Model, ModelStatus } from '../types';
+import type { Model, ModelStatus, ApprovalStatus } from '../types';
 import { usePermissionsStore } from '../store/permissionsStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -91,6 +91,22 @@ export const Models = () => {
       return <Badge variant="info">{status}</Badge>;
     }
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
+
+  const getApprovalIcon = (approvalStatus?: ApprovalStatus) => {
+    if (!approvalStatus || approvalStatus === 'pending') {
+      return <Circle className="w-5 h-5 text-gray-400" />;
+    }
+    if (approvalStatus === 'approved') {
+      return <Check className="w-5 h-5 text-green-600" />;
+    }
+    if (approvalStatus === 'approved_with_comments') {
+      return <HelpCircle className="w-5 h-5 text-yellow-600" />;
+    }
+    if (approvalStatus === 'not_approved') {
+      return <X className="w-5 h-5 text-fuchsia-600" />;
+    }
+    return <Circle className="w-5 h-5 text-gray-400" />;
   };
 
   return (
@@ -203,8 +219,11 @@ export const Models = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {t('models.status')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('models.designer')}
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('permissions.approveAsBuyer')}
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('permissions.approveAsConstructor')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {t('models.date')}
@@ -263,8 +282,11 @@ export const Models = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getStatusBadge(model.status)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {model.designer_name || '—'}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {getApprovalIcon((model as any).buyer_approval)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {getApprovalIcon((model as any).constructor_approval)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(model.date_created).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')}
