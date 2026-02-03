@@ -511,7 +511,7 @@ export const getUserPermissions = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Delete user (only for buyers)
+// Delete user (only for buyers) - soft delete to preserve all data
 export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     const userRole = req.user?.role;
@@ -536,7 +536,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     // Check if user exists
     const userCheck = await pool.query(
-      'SELECT id FROM users WHERE id = $1',
+      'SELECT id, is_active FROM users WHERE id = $1',
       [userId]
     );
 
@@ -547,41 +547,19 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Clear references to this user in related tables (set to NULL)
-    // Models table
-    await pool.query('UPDATE models SET designer_id = NULL WHERE designer_id = $1', [userId]);
-    await pool.query('UPDATE models SET created_by = NULL WHERE created_by = $1', [userId]);
-
-    // Model files
-    await pool.query('UPDATE model_files SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
-
-    // Technical files
-    await pool.query('UPDATE technical_files SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
-
-    // Model sketches
-    await pool.query('UPDATE model_sketches SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
-
-    // Notifications
-    await pool.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
-
-    // Model history
-    await pool.query('UPDATE model_history SET changed_by = NULL WHERE changed_by = $1', [userId]);
-
-    // Export logs
-    await pool.query('UPDATE export_logs SET generated_by = NULL WHERE generated_by = $1', [userId]);
-
-    // Status history
-    await pool.query('UPDATE status_history SET changed_by_user_id = NULL WHERE changed_by_user_id = $1', [userId]);
-
-    // Approvals
-    await pool.query('UPDATE model_approvals SET approver_id = NULL WHERE approver_id = $1', [userId]);
-
-    // Delete user (comments and user_permissions have ON DELETE CASCADE)
-    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+    // Soft delete: deactivate user instead of hard delete
+    // This preserves all user's comments, history, files, and other data
+    await pool.query(
+      `UPDATE users
+       SET is_active = false,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [userId]
+    );
 
     return res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User deactivated successfully'
     });
   } catch (error) {
     console.error('Delete user error:', error);
