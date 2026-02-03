@@ -134,17 +134,6 @@ export const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Demo accounts:</p>
-            <p className="mt-2">
-              <span className="font-medium">Buyer:</span> buyer@example.com /
-              password123
-            </p>
-            <p>
-              <span className="font-medium">Designer:</span>{' '}
-              designer@example.com / password123
-            </p>
-          </div>
         </Card>
 
         <p className="text-center mt-6 text-sm text-gray-600">
