@@ -534,6 +534,11 @@ export async function initializeSchema() {
         SET can_approve_as_buyer = TRUE
         WHERE user_id IN (SELECT id FROM users WHERE role = 'buyer')
           AND can_approve_as_buyer = FALSE;
+
+        -- Обновляем CHECK constraint для users.role чтобы включить manager
+        ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+        ALTER TABLE users ADD CONSTRAINT users_role_check
+          CHECK (role IN ('designer', 'constructor', 'buyer', 'manager', 'china_office', 'factory'));
       `);
       // Seed reference data if empty
       await seedReferenceData(client);
@@ -579,7 +584,7 @@ export async function initializeSchema() {
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         full_name VARCHAR(255) NOT NULL,
-        role VARCHAR(50) NOT NULL CHECK (role IN ('designer', 'constructor', 'buyer', 'china_office', 'factory')),
+        role VARCHAR(50) NOT NULL CHECK (role IN ('designer', 'constructor', 'buyer', 'manager', 'china_office', 'factory')),
         factory_id INTEGER REFERENCES factories(id),
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

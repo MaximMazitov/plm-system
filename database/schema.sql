@@ -34,7 +34,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL CHECK (role IN ('designer', 'constructor', 'buyer', 'china_office', 'factory')),
+    role VARCHAR(50) NOT NULL CHECK (role IN ('designer', 'constructor', 'buyer', 'manager', 'china_office', 'factory')),
     factory_id INTEGER REFERENCES factories(id),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
