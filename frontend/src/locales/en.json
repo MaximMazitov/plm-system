@@ -316,7 +316,10 @@
     "confirmChangesMessage": "Are you sure you want to save changes for user",
     "activeUser": "Active user",
     "saveError": "Error saving user",
-    "deleteError": "Error deleting user"
+    "deleteError": "Error deleting user",
+    "factory": "Factory",
+    "selectFactory": "Select factory",
+    "noFactoriesAvailable": "No factories available. Add a factory in counterparties first."
   },
   "admin": {
     "title": "Reference Management",

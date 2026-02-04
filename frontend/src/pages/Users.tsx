@@ -14,6 +14,14 @@ interface User {
   role: string;
   is_active: boolean;
   created_at: string;
+  factory_id?: number;
+}
+
+interface Factory {
+  id: number;
+  name: string;
+  code: string;
+  is_active: boolean;
 }
 
 interface UserPermissions {
@@ -60,8 +68,10 @@ export const Users = () => {
     password: '',
     full_name: '',
     role: 'designer',
-    is_active: true
+    is_active: true,
+    factory_id: null as number | null
   });
+  const [factories, setFactories] = useState<Factory[]>([]);
 
   const [permissions, setPermissions] = useState<UserPermissions>({
     can_view_dashboard: true,
@@ -93,7 +103,24 @@ export const Users = () => {
 
   useEffect(() => {
     loadUsers();
+    loadFactories();
   }, []);
+
+  const loadFactories = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/factories`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFactories(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load factories:', error);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -122,6 +149,11 @@ export const Users = () => {
       is_active: formData.is_active,
       permissions
     };
+
+    // Add factory_id for factory role
+    if (formData.role === 'factory' && formData.factory_id) {
+      body.factory_id = formData.factory_id;
+    }
 
     if (!editingUser) {
       body.email = formData.email;
@@ -167,7 +199,8 @@ export const Users = () => {
           password: '',
           full_name: '',
           role: 'designer',
-          is_active: true
+          is_active: true,
+          factory_id: null
         });
         setPermissions({
           can_view_dashboard: true,
@@ -220,7 +253,8 @@ export const Users = () => {
       password: '',
       full_name: user.full_name,
       role: user.role,
-      is_active: user.is_active
+      is_active: user.is_active,
+      factory_id: user.factory_id || null
     });
 
     // Load user permissions
@@ -308,7 +342,8 @@ export const Users = () => {
                 password: '',
                 full_name: '',
                 role: 'designer',
-                is_active: true
+                is_active: true,
+                factory_id: null
               });
               setPermissions({
                 can_view_dashboard: true,
@@ -494,7 +529,7 @@ export const Users = () => {
                   </label>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value, factory_id: null })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="designer">{t('roles.designer')}</option>
@@ -504,6 +539,33 @@ export const Users = () => {
                     <option value="factory">{t('roles.factory')}</option>
                   </select>
                 </div>
+
+                {/* Factory Selection - only for factory role */}
+                {formData.role === 'factory' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('users.factory')}
+                    </label>
+                    <select
+                      value={formData.factory_id || ''}
+                      onChange={(e) => setFormData({ ...formData, factory_id: e.target.value ? Number(e.target.value) : null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">{t('users.selectFactory')}</option>
+                      {factories.map((factory) => (
+                        <option key={factory.id} value={factory.id}>
+                          {factory.name} ({factory.code})
+                        </option>
+                      ))}
+                    </select>
+                    {factories.length === 0 && (
+                      <p className="mt-1 text-sm text-orange-600">
+                        {t('users.noFactoriesAvailable')}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Permissions Section */}
                 <div className="border-t border-gray-200 pt-4">
