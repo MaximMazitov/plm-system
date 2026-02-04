@@ -155,8 +155,10 @@ export const Users = () => {
       body.factory_id = formData.factory_id;
     }
 
+    // Always include email
+    body.email = formData.email;
+
     if (!editingUser) {
-      body.email = formData.email;
       body.password = formData.password;
     } else if (formData.password) {
       body.password = formData.password;
@@ -482,20 +484,18 @@ export const Users = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {!editingUser && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

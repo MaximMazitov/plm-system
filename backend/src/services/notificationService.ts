@@ -109,23 +109,26 @@ class NotificationService {
 
       if (role === 'factory' && factoryId) {
         // Для фабрики - получаем пользователей конкретной фабрики
+        console.log(`[Notifications] Looking for factory users with factory_id=${factoryId}`);
         query = `
           SELECT id as user_id, email, full_name, role
           FROM users
-          WHERE role = 'factory' AND factory_id = $1 AND email IS NOT NULL AND email != ''
+          WHERE role = 'factory' AND factory_id = $1 AND is_active = true AND email IS NOT NULL AND email != ''
         `;
         params = [factoryId];
       } else {
         // Для остальных ролей - все пользователи с этой ролью
+        console.log(`[Notifications] Looking for users with role=${role}`);
         query = `
           SELECT id as user_id, email, full_name, role
           FROM users
-          WHERE role = $1 AND email IS NOT NULL AND email != ''
+          WHERE role = $1 AND is_active = true AND email IS NOT NULL AND email != ''
         `;
         params = [role];
       }
 
       const result = await pool.query(query, params);
+      console.log(`[Notifications] Found ${result.rows.length} recipients for role=${role}:`, result.rows.map(r => r.email));
       return result.rows;
     } catch (error) {
       console.error('Error getting recipients by role:', error);
