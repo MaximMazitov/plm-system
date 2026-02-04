@@ -65,7 +65,7 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     }
 
     // Validate role
-    const validRoles = ['designer', 'constructor', 'buyer', 'china_office', 'factory'];
+    const validRoles = ['designer', 'constructor', 'buyer', 'manager', 'china_office', 'factory'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
@@ -221,7 +221,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     // Validate role if provided
     if (role) {
-      const validRoles = ['designer', 'constructor', 'buyer', 'china_office', 'factory'];
+      const validRoles = ['designer', 'constructor', 'buyer', 'manager', 'china_office', 'factory'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({
           success: false,
