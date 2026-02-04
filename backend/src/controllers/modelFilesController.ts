@@ -9,22 +9,9 @@ import https from 'https';
 import http from 'http';
 import { uploadToR2, deleteFromR2, extractKeyFromUrl, isR2Configured } from '../services/r2Storage';
 
-// Настройка multer - используем memory storage для R2
-const storage = isR2Configured()
-  ? multer.memoryStorage()
-  : multer.diskStorage({
-      destination: (_req, _file, cb) => {
-        const uploadDir = path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-      },
-      filename: (_req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-      }
-    });
+// Настройка multer - всегда используем memory storage для R2
+// Локальное хранилище отключено для предотвращения потери файлов при редеплое
+const storage = multer.memoryStorage();
 
 export const upload = multer({
   storage,
@@ -76,48 +63,52 @@ export const uploadModelFile = async (req: AuthRequest, res: Response) => {
     let file_url: string;
     let r2_key: string | null = null;
 
-    // Пробуем загрузить в R2
+    // Проверяем конфигурацию R2
     console.log(`[Upload] Checking R2 configuration...`);
     console.log(`[Upload] isR2Configured: ${isR2Configured()}`);
     console.log(`[Upload] Has buffer: ${!!req.file.buffer}`);
     console.log(`[Upload] Buffer size: ${req.file.buffer?.length || 0}`);
 
-    if (isR2Configured() && req.file.buffer) {
-      console.log(`[Upload] Attempting R2 upload...`);
-      const uploadResult = await uploadToR2(
-        req.file.buffer,
-        file_name,
-        `models/${id}/${file_type || 'files'}`,
-        req.file.mimetype
-      );
-
-      console.log(`[Upload] R2 result: ${JSON.stringify(uploadResult)}`);
-
-      if (uploadResult.success && uploadResult.url) {
-        file_url = uploadResult.url;
-        r2_key = uploadResult.key || null;
-        console.log(`[Upload] R2 upload successful: ${file_url}`);
-      } else {
-        // Fallback to local storage
-        console.log(`[Upload] R2 upload failed: ${uploadResult.error}, falling back to local storage`);
-        const uploadDir = path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const localFilename = uniqueSuffix + path.extname(file_name);
-        fs.writeFileSync(path.join(uploadDir, localFilename), req.file.buffer);
-        file_url = `/uploads/${localFilename}`;
-      }
-    } else if (req.file.filename) {
-      // Local storage (diskStorage)
-      file_url = `/uploads/${req.file.filename}`;
-    } else {
-      return res.status(500).json({
+    // R2 должен быть настроен - локальное хранилище отключено
+    if (!isR2Configured()) {
+      console.error('[Upload] R2 storage is not configured! File upload rejected.');
+      return res.status(503).json({
         success: false,
-        error: 'File upload failed - no file data'
+        error: 'Cloud storage (R2) is not configured. Please contact administrator.',
+        error_ru: 'Облачное хранилище (R2) не настроено. Обратитесь к администратору.'
       });
     }
+
+    if (!req.file.buffer) {
+      console.error('[Upload] No file buffer available');
+      return res.status(400).json({
+        success: false,
+        error: 'File data not received'
+      });
+    }
+
+    console.log(`[Upload] Attempting R2 upload...`);
+    const uploadResult = await uploadToR2(
+      req.file.buffer,
+      file_name,
+      `models/${id}/${file_type || 'files'}`,
+      req.file.mimetype
+    );
+
+    console.log(`[Upload] R2 result: ${JSON.stringify(uploadResult)}`);
+
+    if (!uploadResult.success || !uploadResult.url) {
+      console.error(`[Upload] R2 upload failed: ${uploadResult.error}`);
+      return res.status(503).json({
+        success: false,
+        error: `Cloud storage upload failed: ${uploadResult.error}`,
+        error_ru: `Ошибка загрузки в облачное хранилище: ${uploadResult.error}`
+      });
+    }
+
+    file_url = uploadResult.url;
+    r2_key = uploadResult.key || null;
+    console.log(`[Upload] R2 upload successful: ${file_url}`);
 
     const result = await pool.query(
       `INSERT INTO model_files (model_id, file_name, file_url, file_type, r2_key)

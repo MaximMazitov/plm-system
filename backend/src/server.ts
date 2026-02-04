@@ -25,6 +25,7 @@ import factoryRoutes from './routes/factories';
 // Import database connection
 import pool from './database/connection';
 import { initializeSchema } from './database/initSchema';
+import { isR2Configured } from './services/r2Storage';
 
 const app = express();
 const httpServer = createServer(app);
@@ -68,6 +69,22 @@ app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Server is healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Storage status check
+app.get('/api/storage/status', (_req: Request, res: Response) => {
+  const r2Configured = isR2Configured();
+  res.status(r2Configured ? 200 : 503).json({
+    success: r2Configured,
+    storage: {
+      type: 'cloudflare_r2',
+      configured: r2Configured,
+      message: r2Configured
+        ? 'Cloud storage is ready for file uploads'
+        : 'Cloud storage is NOT configured. File uploads will fail.'
+    },
     timestamp: new Date().toISOString()
   });
 });
@@ -126,15 +143,42 @@ export { io };
 // Start server
 const PORT = process.env.PORT || 3000;
 
+// Check R2 storage configuration
+const checkR2Configuration = () => {
+  const r2Configured = isR2Configured();
+  if (!r2Configured) {
+    console.error(`
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║   ⚠️  WARNING: R2 CLOUD STORAGE IS NOT CONFIGURED!            ║
+    ║                                                               ║
+    ║   File uploads will FAIL until R2 is properly configured.     ║
+    ║   Please set the following environment variables:             ║
+    ║   - R2_ACCOUNT_ID                                             ║
+    ║   - R2_ACCESS_KEY_ID                                          ║
+    ║   - R2_SECRET_ACCESS_KEY                                      ║
+    ║   - R2_BUCKET_NAME                                            ║
+    ║   - R2_PUBLIC_URL                                             ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    `);
+  } else {
+    console.log('✅ R2 cloud storage is configured');
+  }
+  return r2Configured;
+};
+
 // Initialize schema and start server
 initializeSchema()
   .then(() => {
+    // Check R2 configuration
+    const r2Ready = checkR2Configuration();
+
     httpServer.listen(PORT, () => {
       console.log(`
     ╔═══════════════════════════════════════╗
     ║   PLM System Backend Server           ║
     ║   Running on port ${PORT}               ║
     ║   Environment: ${process.env.NODE_ENV || 'development'}           ║
+    ║   R2 Storage: ${r2Ready ? '✅ Ready' : '❌ NOT CONFIGURED'}              ║
     ╚═══════════════════════════════════════╝
       `);
     });
