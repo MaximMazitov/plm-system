@@ -1,5 +1,5 @@
 // User roles
-export type UserRole = 'designer' | 'constructor' | 'buyer' | 'china_office' | 'factory';
+export type UserRole = 'designer' | 'constructor' | 'buyer' | 'manager' | 'china_office' | 'factory';
 
 // Model statuses
 export type ModelStatus =

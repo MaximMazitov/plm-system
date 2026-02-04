@@ -313,6 +313,7 @@ export const Users = () => {
       'buyer': 'bg-purple-100 text-purple-700',
       'designer': 'bg-blue-100 text-blue-700',
       'constructor': 'bg-green-100 text-green-700',
+      'manager': 'bg-teal-100 text-teal-700',
       'china_office': 'bg-red-100 text-red-700',
       'factory': 'bg-orange-100 text-orange-700'
     };
@@ -324,6 +325,7 @@ export const Users = () => {
       'buyer': 'roles.buyer',
       'designer': 'roles.designer',
       'constructor': 'roles.constructor',
+      'manager': 'roles.manager',
       'china_office': 'roles.china_office',
       'factory': 'roles.factory'
     };
@@ -535,6 +537,7 @@ export const Users = () => {
                     <option value="designer">{t('roles.designer')}</option>
                     <option value="constructor">{t('roles.constructor')}</option>
                     <option value="buyer">{t('roles.buyer')}</option>
+                    <option value="manager">{t('roles.manager')}</option>
                     <option value="china_office">{t('roles.china_office')}</option>
                     <option value="factory">{t('roles.factory')}</option>
                   </select>

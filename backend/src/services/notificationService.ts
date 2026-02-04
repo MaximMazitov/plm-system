@@ -15,7 +15,7 @@ import { emailService } from './emailService';
 // Статусы моделей обрабатываются как string для гибкости с разными форматами из БД
 
 // Типы ролей пользователей
-type UserRole = 'admin' | 'buyer' | 'designer' | 'constructor' | 'china_office' | 'factory';
+type UserRole = 'admin' | 'buyer' | 'designer' | 'constructor' | 'manager' | 'china_office' | 'factory';
 
 // Кого уведомлять при каком статусе (включая короткие варианты)
 const STATUS_NOTIFICATION_RULES: Record<string, UserRole[]> = {
