@@ -20,6 +20,108 @@ interface SendEmailResult {
   error?: string;
 }
 
+type Language = 'ru' | 'en';
+
+// Переводы для email шаблонов
+const translations = {
+  ru: {
+    // Status change email
+    statusSubject: (modelNumber: string, statusLabel: string) =>
+      `PLM: Модель ${modelNumber} - статус изменен на "${statusLabel}"`,
+    statusHeader: 'Уведомление об изменении статуса',
+    statusGreeting: (name: string) => `Здравствуйте, ${name}!`,
+    statusChanged: 'Статус модели был изменен:',
+    modelLabel: 'Модель:',
+    collectionLabel: 'Коллекция:',
+    newStatusLabel: 'Новый статус:',
+    openModel: 'Открыть модель',
+    autoMessage: 'Это автоматическое уведомление от PLM System.',
+    noReply: 'Пожалуйста, не отвечайте на это письмо.',
+
+    // Approval email
+    approvalSubject: (modelNumber: string, roleLabel: string) =>
+      `PLM: Модель ${modelNumber} - согласование от ${roleLabel}`,
+    approvalHeader: 'Уведомление о согласовании',
+    approvalReceived: 'Получено решение по согласованию модели:',
+    commentLabel: 'Комментарий:',
+
+    // Roles
+    buyer: 'Байер',
+    constructor: 'Конструктор',
+
+    // Statuses
+    statuses: {
+      draft: 'Черновик',
+      under_review: 'На рассмотрении',
+      pending_review: 'На рассмотрении',
+      approved: 'Одобрено',
+      ds_stage: 'DS этап',
+      ds: 'DS этап',
+      pps_stage: 'PPS этап',
+      pps: 'PPS этап',
+      in_production: 'В производстве',
+      production: 'В производстве',
+      shipped: 'Отгружено'
+    } as Record<string, string>,
+
+    // Approval statuses
+    approvalStatuses: {
+      approved: 'Одобрено',
+      approved_with_comments: 'Одобрено с комментариями',
+      not_approved: 'Не одобрено',
+      pending: 'Ожидает'
+    } as Record<string, string>
+  },
+  en: {
+    // Status change email
+    statusSubject: (modelNumber: string, statusLabel: string) =>
+      `PLM: Model ${modelNumber} - status changed to "${statusLabel}"`,
+    statusHeader: 'Status Change Notification',
+    statusGreeting: (name: string) => `Hello, ${name}!`,
+    statusChanged: 'Model status has been changed:',
+    modelLabel: 'Model:',
+    collectionLabel: 'Collection:',
+    newStatusLabel: 'New status:',
+    openModel: 'Open Model',
+    autoMessage: 'This is an automatic notification from PLM System.',
+    noReply: 'Please do not reply to this email.',
+
+    // Approval email
+    approvalSubject: (modelNumber: string, roleLabel: string) =>
+      `PLM: Model ${modelNumber} - approval from ${roleLabel}`,
+    approvalHeader: 'Approval Notification',
+    approvalReceived: 'Approval decision received for model:',
+    commentLabel: 'Comment:',
+
+    // Roles
+    buyer: 'Buyer',
+    constructor: 'Constructor',
+
+    // Statuses
+    statuses: {
+      draft: 'Draft',
+      under_review: 'Under Review',
+      pending_review: 'Under Review',
+      approved: 'Approved',
+      ds_stage: 'DS Stage',
+      ds: 'DS Stage',
+      pps_stage: 'PPS Stage',
+      pps: 'PPS Stage',
+      in_production: 'In Production',
+      production: 'In Production',
+      shipped: 'Shipped'
+    } as Record<string, string>,
+
+    // Approval statuses
+    approvalStatuses: {
+      approved: 'Approved',
+      approved_with_comments: 'Approved with Comments',
+      not_approved: 'Not Approved',
+      pending: 'Pending'
+    } as Record<string, string>
+  }
+};
+
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private config: EmailConfig | null = null;
@@ -113,6 +215,7 @@ class EmailService {
 
   /**
    * Отправляет уведомление о смене статуса модели
+   * @param language - язык письма ('ru' для русского, 'en' для английского)
    */
   async sendStatusChangeEmail(
     to: string,
@@ -120,11 +223,14 @@ class EmailService {
     modelNumber: string,
     modelName: string,
     collectionName: string,
-    _newStatus: string,
+    newStatus: string,
     statusLabel: string,
-    modelUrl: string
+    modelUrl: string,
+    language: Language = 'ru'
   ): Promise<SendEmailResult> {
-    const subject = `PLM: Модель ${modelNumber} - статус изменен на "${statusLabel}"`;
+    const t = translations[language];
+    const localizedStatusLabel = t.statuses[newStatus] || statusLabel;
+    const subject = t.statusSubject(modelNumber, localizedStatusLabel);
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -148,25 +254,25 @@ class EmailService {
   <div class="container">
     <div class="header">
       <h1>PLM System</h1>
-      <p>Уведомление об изменении статуса</p>
+      <p>${t.statusHeader}</p>
     </div>
     <div class="content">
-      <p>Здравствуйте, ${recipientName}!</p>
-      <p>Статус модели был изменен:</p>
+      <p>${t.statusGreeting(recipientName)}</p>
+      <p>${t.statusChanged}</p>
 
       <div class="model-info">
-        <p><span class="label">Модель:</span> ${modelNumber} - ${modelName || 'N/A'}</p>
-        <p><span class="label">Коллекция:</span> ${collectionName || 'N/A'}</p>
-        <p><span class="label">Новый статус:</span> <span class="status">${statusLabel}</span></p>
+        <p><span class="label">${t.modelLabel}</span> ${modelNumber} - ${modelName || 'N/A'}</p>
+        <p><span class="label">${t.collectionLabel}</span> ${collectionName || 'N/A'}</p>
+        <p><span class="label">${t.newStatusLabel}</span> <span class="status">${localizedStatusLabel}</span></p>
       </div>
 
       <p style="text-align: center;">
-        <a href="${modelUrl}" class="button">Открыть модель</a>
+        <a href="${modelUrl}" class="button">${t.openModel}</a>
       </p>
     </div>
     <div class="footer">
-      <p>Это автоматическое уведомление от PLM System.</p>
-      <p>Пожалуйста, не отвечайте на это письмо.</p>
+      <p>${t.autoMessage}</p>
+      <p>${t.noReply}</p>
     </div>
   </div>
 </body>
@@ -178,6 +284,7 @@ class EmailService {
 
   /**
    * Отправляет уведомление о согласовании
+   * @param language - язык письма ('ru' для русского, 'en' для английского)
    */
   async sendApprovalEmail(
     to: string,
@@ -187,10 +294,13 @@ class EmailService {
     approvalStatus: string,
     approvalLabel: string,
     comment: string | undefined,
-    modelUrl: string
+    modelUrl: string,
+    language: Language = 'ru'
   ): Promise<SendEmailResult> {
-    const roleLabel = approvalType === 'buyer' ? 'Байер' : 'Конструктор';
-    const subject = `PLM: Модель ${modelNumber} - согласование от ${roleLabel}`;
+    const t = translations[language];
+    const roleLabel = approvalType === 'buyer' ? t.buyer : t.constructor;
+    const localizedApprovalLabel = t.approvalStatuses[approvalStatus] || approvalLabel;
+    const subject = t.approvalSubject(modelNumber, roleLabel);
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -217,27 +327,27 @@ class EmailService {
   <div class="container">
     <div class="header">
       <h1>PLM System</h1>
-      <p>Уведомление о согласовании</p>
+      <p>${t.approvalHeader}</p>
     </div>
     <div class="content">
-      <p>Здравствуйте, ${recipientName}!</p>
-      <p>Получено решение по согласованию модели:</p>
+      <p>${t.statusGreeting(recipientName)}</p>
+      <p>${t.approvalReceived}</p>
 
       <div class="model-info">
-        <p><span class="label">Модель:</span> ${modelNumber}</p>
+        <p><span class="label">${t.modelLabel}</span> ${modelNumber}</p>
         <p><span class="label">${roleLabel}:</span>
-          <span class="${approvalStatus.includes('approved') ? 'status-approved' : approvalStatus === 'not_approved' ? 'status-rejected' : 'status-pending'}">${approvalLabel}</span>
+          <span class="${approvalStatus.includes('approved') ? 'status-approved' : approvalStatus === 'not_approved' ? 'status-rejected' : 'status-pending'}">${localizedApprovalLabel}</span>
         </p>
-        ${comment ? `<div class="comment"><span class="label">Комментарий:</span><br>${comment}</div>` : ''}
+        ${comment ? `<div class="comment"><span class="label">${t.commentLabel}</span><br>${comment}</div>` : ''}
       </div>
 
       <p style="text-align: center;">
-        <a href="${modelUrl}" class="button">Открыть модель</a>
+        <a href="${modelUrl}" class="button">${t.openModel}</a>
       </p>
     </div>
     <div class="footer">
-      <p>Это автоматическое уведомление от PLM System.</p>
-      <p>Пожалуйста, не отвечайте на это письмо.</p>
+      <p>${t.autoMessage}</p>
+      <p>${t.noReply}</p>
     </div>
   </div>
 </body>

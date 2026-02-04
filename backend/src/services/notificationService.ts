@@ -47,6 +47,19 @@ interface NotificationRecipient {
   role: UserRole;
 }
 
+type Language = 'ru' | 'en';
+
+// Роли, которые получают письма на английском языке
+const ENGLISH_ROLES: UserRole[] = ['china_office', 'factory'];
+
+/**
+ * Определяет язык письма по роли получателя
+ * China Office и Factory получают письма на английском
+ */
+function getLanguageForRole(role: UserRole): Language {
+  return ENGLISH_ROLES.includes(role) ? 'en' : 'ru';
+}
+
 class NotificationService {
   private frontendUrl: string;
 
@@ -232,6 +245,9 @@ class NotificationService {
     // Отправляем уведомления каждому получателю
     for (const recipient of finalRecipients) {
       try {
+        // Определяем язык письма по роли получателя
+        const language = getLanguageForRole(recipient.role);
+
         const sendResult = await emailService.sendStatusChangeEmail(
           recipient.email,
           recipient.full_name,
@@ -240,7 +256,8 @@ class NotificationService {
           modelInfo.collection_name,
           newStatus,
           statusLabel,
-          modelUrl
+          modelUrl,
+          language
         );
 
         if (sendResult.success) {
@@ -332,6 +349,9 @@ class NotificationService {
 
     for (const recipient of uniqueRecipients) {
       try {
+        // Определяем язык письма по роли получателя
+        const language = getLanguageForRole(recipient.role);
+
         await emailService.sendApprovalEmail(
           recipient.email,
           recipient.full_name,
@@ -340,7 +360,8 @@ class NotificationService {
           approvalStatus,
           approvalLabels[approvalStatus] || approvalStatus,
           comment,
-          modelUrl
+          modelUrl,
+          language
         );
       } catch (error) {
         console.error(`Failed to send approval email to ${recipient.full_name}:`, error);
