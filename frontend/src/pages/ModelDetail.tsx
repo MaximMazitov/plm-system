@@ -239,21 +239,33 @@ export const ModelDetail = () => {
         formData.append('file', file);
         formData.append('file_type', fileType);
 
-        await fetch(`${API_BASE_URL}/models/${id}/files`, {
+        const response = await fetch(`${API_BASE_URL}/models/${id}/files`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
           },
           body: formData
         });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          const errorMessage = result.error_ru || result.error || 'Ошибка загрузки файла';
+          alert(`Ошибка: ${errorMessage}`);
+          console.error('Upload failed:', result);
+          return;
+        }
       }
 
       // Перезагружаем список файлов
       await loadModelData();
     } catch (error) {
       console.error('Failed to upload file:', error);
+      alert('Ошибка сети при загрузке файла');
     } finally {
       setIsUploading(false);
+      // Сбрасываем input, чтобы можно было загрузить тот же файл повторно
+      event.target.value = '';
     }
   };
 
