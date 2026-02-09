@@ -376,6 +376,27 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Status change role restrictions
+    if (status && status !== currentModel.status) {
+      const statusRoleMap: Record<string, string[]> = {
+        'under_review': ['buyer', 'constructor', 'designer'],
+        'approved': ['buyer', 'constructor'],
+        'ds_stage': ['buyer', 'constructor'],
+        'ds': ['buyer', 'constructor'],
+        'pps_stage': ['buyer', 'china_office'],
+        'pps': ['buyer', 'china_office'],
+        'in_production': ['buyer', 'constructor'],
+      };
+
+      const allowedRoles = statusRoleMap[status];
+      if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+        return res.status(403).json({
+          success: false,
+          error: `Role "${userRole}" is not allowed to set status "${status}"`
+        });
+      }
+    }
+
     // Only buyers can update product_group
     const finalProductGroup = userRole === 'buyer' ? product_group : undefined;
     const finalProductGroupCode = userRole === 'buyer' ? product_group_code : undefined;

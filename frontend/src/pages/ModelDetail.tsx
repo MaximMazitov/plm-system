@@ -9,6 +9,17 @@ import { ArrowLeft, Edit, Download, Upload, FileText, Image as ImageIcon, Trash2
 import { modelsApi } from '../services/api';
 import type { Model, ApprovalStatus } from '../types';
 import { usePermissionsStore } from '../store/permissionsStore';
+import { useAuthStore } from '../store/authStore';
+
+// Status change role restrictions map
+const statusRoleMap: Record<string, string[]> = {
+  'draft': ['buyer', 'constructor', 'designer', 'china_office'],
+  'under_review': ['buyer', 'constructor', 'designer'],
+  'approved': ['buyer', 'constructor'],
+  'ds': ['buyer', 'constructor'],
+  'pps': ['buyer', 'china_office'],
+  'in_production': ['buyer', 'constructor'],
+};
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -58,6 +69,8 @@ interface Factory {
 export const ModelDetail = () => {
   const { t } = useTranslation();
   const { hasPermission, loadPermissions } = usePermissionsStore();
+  const { user: currentUser } = useAuthStore();
+  const userRole = currentUser?.role || '';
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -1293,12 +1306,32 @@ export const ModelDetail = () => {
                         onChange={(e) => setSelectedStatus(e.target.value)}
                         className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="draft">Draft</option>
-                        <option value="under_review">Under Review</option>
-                        <option value="approved">Approved</option>
-                        <option value="ds">DS / Development Sample</option>
-                        <option value="pps">PPS / Pre-Production Sample</option>
-                        <option value="in_production">In Production</option>
+                        {/* Always show current status */}
+                        {model.status === 'draft' && <option value="draft">Draft</option>}
+                        {model.status === 'under_review' && <option value="under_review">Under Review</option>}
+                        {model.status === 'approved' && <option value="approved">Approved</option>}
+                        {model.status === 'ds' && <option value="ds">DS / Development Sample</option>}
+                        {model.status === 'pps' && <option value="pps">PPS / Pre-Production Sample</option>}
+                        {model.status === 'in_production' && <option value="in_production">In Production</option>}
+                        {/* Show other statuses only if role is allowed */}
+                        {model.status !== 'draft' && (!statusRoleMap['draft'] || statusRoleMap['draft'].includes(userRole)) && (
+                          <option value="draft">Draft</option>
+                        )}
+                        {model.status !== 'under_review' && (!statusRoleMap['under_review'] || statusRoleMap['under_review'].includes(userRole)) && (
+                          <option value="under_review">Under Review</option>
+                        )}
+                        {model.status !== 'approved' && (!statusRoleMap['approved'] || statusRoleMap['approved'].includes(userRole)) && (
+                          <option value="approved">Approved</option>
+                        )}
+                        {model.status !== 'ds' && (!statusRoleMap['ds'] || statusRoleMap['ds'].includes(userRole)) && (
+                          <option value="ds">DS / Development Sample</option>
+                        )}
+                        {model.status !== 'pps' && (!statusRoleMap['pps'] || statusRoleMap['pps'].includes(userRole)) && (
+                          <option value="pps">PPS / Pre-Production Sample</option>
+                        )}
+                        {model.status !== 'in_production' && (!statusRoleMap['in_production'] || statusRoleMap['in_production'].includes(userRole)) && (
+                          <option value="in_production">In Production</option>
+                        )}
                       </select>
                       <div className="flex gap-2">
                         <button
