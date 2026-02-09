@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
@@ -13,11 +13,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 
 // Helper function to get proper file URL (handles both R2 and local files)
 const getFileUrl = (fileUrl: string): string => {
-  // If URL is already absolute (starts with http:// or https://), use it as is
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
     return fileUrl;
   }
-  // Otherwise, prepend the API base URL (for local files like /uploads/...)
   return `${API_BASE_URL.replace('/api', '')}${fileUrl}`;
 };
 
@@ -65,15 +63,15 @@ interface CollectionOption {
 }
 
 // Read filters from URL search params
-const readFiltersFromUrl = (searchParams: URLSearchParams): FilterState => {
-  const filters: FilterState = { ...defaultFilters };
+const readFiltersFromUrl = (sp: URLSearchParams): FilterState => {
+  const f: FilterState = { ...defaultFilters };
   for (const [key, paramName] of Object.entries(filterParamMap)) {
-    const value = searchParams.get(paramName);
+    const value = sp.get(paramName);
     if (value) {
-      filters[key as keyof FilterState] = value;
+      f[key as keyof FilterState] = value;
     }
   }
-  return filters;
+  return f;
 };
 
 export const Models = () => {
@@ -86,13 +84,16 @@ export const Models = () => {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
 
-  // Read all state from URL
-  const searchTerm = searchParams.get('search') || '';
+  // Read state from URL (except search input which is local for typing)
   const statusFilter = (searchParams.get('status') as ModelStatus | 'all') || 'all';
   const page = parseInt(searchParams.get('page') || '1', 10);
   const appliedFilters = readFiltersFromUrl(searchParams);
+  const urlSearch = searchParams.get('search') || '';
 
-  // Filter panel state (local only, not in URL until applied)
+  // Local state for search input (so typing doesn't trigger API calls)
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
+
+  // Filter panel state (local only, written to URL on "Apply")
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({ ...appliedFilters });
   const [collections, setCollections] = useState<CollectionOption[]>([]);
@@ -102,29 +103,33 @@ export const Models = () => {
     ([, value]) => value !== ''
   ).length;
 
-  // Helper to update URL params without losing existing ones
-  const updateSearchParams = (updates: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams);
-    for (const [key, value] of Object.entries(updates)) {
-      if (value === null || value === '' || value === 'all') {
-        newParams.delete(key);
-      } else {
-        newParams.set(key, value);
+  // Helper to update URL params
+  const updateSearchParams = useCallback((updates: Record<string, string | null>) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === null || value === '' || value === 'all') {
+          newParams.delete(key);
+        } else {
+          newParams.set(key, value);
+        }
       }
-    }
-    setSearchParams(newParams, { replace: true });
-  };
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // Sync local search input when URL changes (e.g. browser back)
+  useEffect(() => {
+    const urlSearchVal = searchParams.get('search') || '';
+    setSearchTerm(urlSearchVal);
+    const urlFilters = readFiltersFromUrl(searchParams);
+    setFilters(urlFilters);
+  }, [searchParams]);
 
   // Load collections for dropdown
   useEffect(() => {
     loadCollections();
   }, []);
-
-  // Sync local filters state when URL changes (e.g. browser back)
-  useEffect(() => {
-    const urlFilters = readFiltersFromUrl(searchParams);
-    setFilters(urlFilters);
-  }, [searchParams]);
 
   const loadCollections = async () => {
     try {
@@ -145,44 +150,31 @@ export const Models = () => {
   const loadModels = async () => {
     try {
       setIsLoading(true);
-      const params: any = { page, limit };
+      const currentSearch = searchParams.get('search') || '';
+      const currentStatus = searchParams.get('status') || 'all';
+      const currentPage = parseInt(searchParams.get('page') || '1', 10);
+      const currentFilters = readFiltersFromUrl(searchParams);
 
-      if (statusFilter !== 'all') {
-        params.status = statusFilter;
+      const params: any = { page: currentPage, limit };
+
+      if (currentStatus !== 'all') {
+        params.status = currentStatus;
       }
 
-      if (searchTerm) {
-        params.search = searchTerm;
+      if (currentSearch) {
+        params.search = currentSearch;
       }
 
       // Apply advanced filters from URL
-      if (appliedFilters.modelNumber) {
-        params.model_number = appliedFilters.modelNumber;
-      }
-      if (appliedFilters.modelName) {
-        params.model_name = appliedFilters.modelName;
-      }
-      if (appliedFilters.collectionId) {
-        params.collection_id = appliedFilters.collectionId;
-      }
-      if (appliedFilters.status) {
-        params.status = appliedFilters.status;
-      }
-      if (appliedFilters.buyerApproval) {
-        params.buyer_approval = appliedFilters.buyerApproval;
-      }
-      if (appliedFilters.constructorApproval) {
-        params.constructor_approval = appliedFilters.constructorApproval;
-      }
-      if (appliedFilters.productType) {
-        params.product_type = appliedFilters.productType;
-      }
-      if (appliedFilters.dateFrom) {
-        params.date_from = appliedFilters.dateFrom;
-      }
-      if (appliedFilters.dateTo) {
-        params.date_to = appliedFilters.dateTo;
-      }
+      if (currentFilters.modelNumber) params.model_number = currentFilters.modelNumber;
+      if (currentFilters.modelName) params.model_name = currentFilters.modelName;
+      if (currentFilters.collectionId) params.collection_id = currentFilters.collectionId;
+      if (currentFilters.status) params.status = currentFilters.status;
+      if (currentFilters.buyerApproval) params.buyer_approval = currentFilters.buyerApproval;
+      if (currentFilters.constructorApproval) params.constructor_approval = currentFilters.constructorApproval;
+      if (currentFilters.productType) params.product_type = currentFilters.productType;
+      if (currentFilters.dateFrom) params.date_from = currentFilters.dateFrom;
+      if (currentFilters.dateTo) params.date_to = currentFilters.dateTo;
 
       const response = await modelsApi.getModels(params);
 
@@ -197,14 +189,9 @@ export const Models = () => {
     }
   };
 
-  const handleSearchChange = (value: string) => {
-    updateSearchParams({ search: value || null, page: null });
-  };
-
+  // Search: write to URL only on Enter / button click
   const handleSearchSubmit = () => {
-    updateSearchParams({ page: null });
-    // Force reload if search term didn't change the URL
-    loadModels();
+    updateSearchParams({ search: searchTerm || null, page: null });
   };
 
   const handleStatusFilterChange = (value: string) => {
@@ -231,6 +218,7 @@ export const Models = () => {
       updates[paramName] = null;
     }
     setFilters({ ...defaultFilters });
+    setSearchTerm('');
     updateSearchParams(updates);
     setShowFilters(false);
   };
@@ -334,7 +322,7 @@ export const Models = () => {
                   className="input flex-1"
                   placeholder={t('models.searchPlaceholder')}
                   value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
                 />
                 <button
@@ -367,12 +355,13 @@ export const Models = () => {
             {/* Filter Button */}
             <div className="flex items-end">
               <button
+                type="button"
                 className={`btn w-full flex items-center justify-center gap-2 ${
                   activeFilterCount > 0 ? 'btn-primary' : 'btn-secondary'
                 }`}
                 onClick={() => {
                   setFilters({ ...appliedFilters });
-                  setShowFilters(!showFilters);
+                  setShowFilters(prev => !prev);
                 }}
               >
                 <Filter className="w-5 h-5" />
@@ -399,6 +388,7 @@ export const Models = () => {
                   >
                     {getFilterLabel(key as keyof FilterState, value)}
                     <button
+                      type="button"
                       onClick={() => handleRemoveFilter(key as keyof FilterState)}
                       className="ml-1 hover:text-primary-900"
                     >
@@ -408,6 +398,7 @@ export const Models = () => {
                 );
               })}
               <button
+                type="button"
                 onClick={handleClearFilters}
                 className="text-sm text-gray-500 hover:text-gray-700 underline"
               >
@@ -556,12 +547,14 @@ export const Models = () => {
               {/* Filter Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                 <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={handleClearFilters}
                 >
                   {t('models.clearFilters')}
                 </button>
                 <button
+                  type="button"
                   className="btn btn-primary"
                   onClick={handleApplyFilters}
                 >
@@ -627,7 +620,6 @@ export const Models = () => {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            {/* Sketch thumbnail */}
                             <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                               {(model as any).sketch_url ? (
                                 <img
