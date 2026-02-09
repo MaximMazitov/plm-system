@@ -539,6 +539,15 @@ export const updateBuyerApproval = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Check that model is in PPS stage
+    const modelCheck = await pool.query('SELECT status FROM models WHERE id = $1', [id]);
+    if (modelCheck.rows.length > 0 && modelCheck.rows[0].status !== 'pps' && modelCheck.rows[0].status !== 'pps_stage') {
+      return res.status(403).json({
+        success: false,
+        error: 'Approval can only be changed when model is in PPS stage'
+      });
+    }
+
     const result = await pool.query(
       `UPDATE models
        SET buyer_approval = $1,
@@ -595,6 +604,15 @@ export const updateConstructorApproval = async (req: AuthRequest, res: Response)
       return res.status(400).json({
         success: false,
         error: 'Invalid approval status'
+      });
+    }
+
+    // Check that model is in PPS stage
+    const modelCheck = await pool.query('SELECT status FROM models WHERE id = $1', [id]);
+    if (modelCheck.rows.length > 0 && modelCheck.rows[0].status !== 'pps' && modelCheck.rows[0].status !== 'pps_stage') {
+      return res.status(403).json({
+        success: false,
+        error: 'Approval can only be changed when model is in PPS stage'
       });
     }
 

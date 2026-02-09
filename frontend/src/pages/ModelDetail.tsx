@@ -1274,7 +1274,7 @@ export const ModelDetail = () => {
                   status={model.buyer_approval || 'pending'}
                   comment={model.buyer_approval_comment || undefined}
                   approvedAt={model.buyer_approved_at}
-                  canEdit={hasPermission('can_approve_as_buyer')}
+                  canEdit={hasPermission('can_approve_as_buyer') && model.status === 'pps'}
                   onUpdate={updateBuyerApproval}
                 />
 
@@ -1284,7 +1284,7 @@ export const ModelDetail = () => {
                   status={model.constructor_approval || 'pending'}
                   comment={model.constructor_approval_comment || undefined}
                   approvedAt={model.constructor_approved_at}
-                  canEdit={hasPermission('can_approve_as_constructor')}
+                  canEdit={hasPermission('can_approve_as_constructor') && model.status === 'pps'}
                   onUpdate={updateConstructorApproval}
                 />
               </div>
