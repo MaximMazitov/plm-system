@@ -106,6 +106,12 @@ export const getModels = async (req: AuthRequest, res: Response) => {
       product_type,
       model_id,
       search,
+      buyer_approval,
+      constructor_approval,
+      date_from,
+      date_to,
+      model_name,
+      model_number,
       page = 1,
       limit = 20
     } = req.query;
@@ -144,6 +150,41 @@ export const getModels = async (req: AuthRequest, res: Response) => {
     if (product_type) {
       whereConditions.push(`m.product_type = $${paramIndex++}`);
       params.push(product_type);
+    }
+
+    // Filter by buyer approval status
+    if (buyer_approval && typeof buyer_approval === 'string') {
+      whereConditions.push(`m.buyer_approval = $${paramIndex++}`);
+      params.push(buyer_approval);
+    }
+
+    // Filter by constructor approval status
+    if (constructor_approval && typeof constructor_approval === 'string') {
+      whereConditions.push(`m.constructor_approval = $${paramIndex++}`);
+      params.push(constructor_approval);
+    }
+
+    // Filter by date range
+    if (date_from && typeof date_from === 'string') {
+      whereConditions.push(`m.date_created >= $${paramIndex++}`);
+      params.push(date_from);
+    }
+
+    if (date_to && typeof date_to === 'string') {
+      whereConditions.push(`m.date_created <= $${paramIndex++}`);
+      params.push(date_to);
+    }
+
+    // Filter by model_name (separate from search)
+    if (model_name && typeof model_name === 'string' && model_name.trim()) {
+      whereConditions.push(`m.model_name ILIKE $${paramIndex++}`);
+      params.push(`%${model_name.trim()}%`);
+    }
+
+    // Filter by model_number (separate from search)
+    if (model_number && typeof model_number === 'string' && model_number.trim()) {
+      whereConditions.push(`m.model_number ILIKE $${paramIndex++}`);
+      params.push(`%${model_number.trim()}%`);
     }
 
     // Search by model_number or model_name

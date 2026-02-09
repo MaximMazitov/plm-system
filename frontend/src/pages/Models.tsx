@@ -3,8 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { Card, Badge } from '../components/ui';
-import { Search, Filter, Plus, Package, Check, X, HelpCircle, Circle } from 'lucide-react';
+import { Search, Filter, Plus, Package, Check, X, HelpCircle, Circle, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
 import { modelsApi } from '../services/api';
+import api from '../services/api';
 import type { Model, ModelStatus, ApprovalStatus } from '../types';
 import { usePermissionsStore } from '../store/permissionsStore';
 
@@ -20,6 +21,36 @@ const getFileUrl = (fileUrl: string): string => {
   return `${API_BASE_URL.replace('/api', '')}${fileUrl}`;
 };
 
+interface FilterState {
+  modelNumber: string;
+  modelName: string;
+  collectionId: string;
+  status: string;
+  buyerApproval: string;
+  constructorApproval: string;
+  productType: string;
+  dateFrom: string;
+  dateTo: string;
+}
+
+const defaultFilters: FilterState = {
+  modelNumber: '',
+  modelName: '',
+  collectionId: '',
+  status: '',
+  buyerApproval: '',
+  constructorApproval: '',
+  productType: '',
+  dateFrom: '',
+  dateTo: '',
+};
+
+interface CollectionOption {
+  id: number;
+  name: string;
+  season_code?: string;
+}
+
 export const Models = () => {
   const { t, i18n } = useTranslation();
   const { hasPermission } = usePermissionsStore();
@@ -33,7 +64,34 @@ export const Models = () => {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
 
-  // Читаем статус из URL при загрузке
+  // Filter panel state
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters });
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>({ ...defaultFilters });
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
+
+  // Count active filters
+  const activeFilterCount = Object.entries(appliedFilters).filter(
+    ([, value]) => value !== ''
+  ).length;
+
+  // Load collections for dropdown
+  useEffect(() => {
+    loadCollections();
+  }, []);
+
+  const loadCollections = async () => {
+    try {
+      const response = await api.get('/collections');
+      if (response.data?.success && response.data?.data) {
+        setCollections(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load collections:', error);
+    }
+  };
+
+  // Read status from URL on load
   useEffect(() => {
     const statusFromUrl = searchParams.get('status');
     if (statusFromUrl && statusFromUrl !== 'all') {
@@ -43,7 +101,7 @@ export const Models = () => {
 
   useEffect(() => {
     loadModels();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, appliedFilters]);
 
   const loadModels = async () => {
     try {
@@ -56,6 +114,35 @@ export const Models = () => {
 
       if (searchTerm) {
         params.search = searchTerm;
+      }
+
+      // Apply advanced filters
+      if (appliedFilters.modelNumber) {
+        params.model_number = appliedFilters.modelNumber;
+      }
+      if (appliedFilters.modelName) {
+        params.model_name = appliedFilters.modelName;
+      }
+      if (appliedFilters.collectionId) {
+        params.collection_id = appliedFilters.collectionId;
+      }
+      if (appliedFilters.status) {
+        params.status = appliedFilters.status;
+      }
+      if (appliedFilters.buyerApproval) {
+        params.buyer_approval = appliedFilters.buyerApproval;
+      }
+      if (appliedFilters.constructorApproval) {
+        params.constructor_approval = appliedFilters.constructorApproval;
+      }
+      if (appliedFilters.productType) {
+        params.product_type = appliedFilters.productType;
+      }
+      if (appliedFilters.dateFrom) {
+        params.date_from = appliedFilters.dateFrom;
+      }
+      if (appliedFilters.dateTo) {
+        params.date_to = appliedFilters.dateTo;
       }
 
       const response = await modelsApi.getModels(params);
@@ -74,6 +161,54 @@ export const Models = () => {
   const handleSearch = () => {
     setPage(1);
     loadModels();
+  };
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({ ...filters });
+    setPage(1);
+    setShowFilters(false);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ ...defaultFilters });
+    setAppliedFilters({ ...defaultFilters });
+    setStatusFilter('all');
+    setPage(1);
+    setShowFilters(false);
+  };
+
+  const handleRemoveFilter = (key: keyof FilterState) => {
+    const updated = { ...appliedFilters, [key]: '' };
+    setAppliedFilters(updated);
+    setFilters(updated);
+    setPage(1);
+  };
+
+  const getFilterLabel = (key: keyof FilterState, value: string): string => {
+    switch (key) {
+      case 'modelNumber':
+        return `${t('models.filterByModelNumber')}: ${value}`;
+      case 'modelName':
+        return `${t('models.filterByModelName')}: ${value}`;
+      case 'collectionId': {
+        const col = collections.find(c => c.id.toString() === value);
+        return `${t('models.filterByCollection')}: ${col?.name || value}`;
+      }
+      case 'status':
+        return `${t('models.filterByStatus')}: ${t(`statuses.${value}`)}`;
+      case 'buyerApproval':
+        return `${t('models.filterByBuyerApproval')}: ${t(`approval.${value}`)}`;
+      case 'constructorApproval':
+        return `${t('models.filterByConstructorApproval')}: ${t(`approval.${value}`)}`;
+      case 'productType':
+        return `${t('models.filterByType')}: ${value}`;
+      case 'dateFrom':
+        return `${t('models.filterByDateFrom')}: ${value}`;
+      case 'dateTo':
+        return `${t('models.filterByDateTo')}: ${value}`;
+      default:
+        return value;
+    }
   };
 
   const getStatusBadge = (status: ModelStatus) => {
@@ -129,7 +264,7 @@ export const Models = () => {
           )}
         </div>
 
-        {/* Filters */}
+        {/* Search & Quick Filters */}
         <Card>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
@@ -174,15 +309,213 @@ export const Models = () => {
               </select>
             </div>
 
-            {/* Additional Filter Button */}
+            {/* Filter Button */}
             <div className="flex items-end">
-              <button className="btn btn-secondary w-full flex items-center justify-center gap-2">
+              <button
+                className={`btn w-full flex items-center justify-center gap-2 ${
+                  activeFilterCount > 0 ? 'btn-primary' : 'btn-secondary'
+                }`}
+                onClick={() => {
+                  setFilters({ ...appliedFilters });
+                  setShowFilters(!showFilters);
+                }}
+              >
                 <Filter className="w-5 h-5" />
                 {t('common.filters')}
+                {activeFilterCount > 0 && (
+                  <span className="bg-white text-primary-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+                {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
           </div>
+
+          {/* Active Filter Tags */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
+              {Object.entries(appliedFilters).map(([key, value]) => {
+                if (!value) return null;
+                return (
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-primary-50 text-primary-700 border border-primary-200"
+                  >
+                    {getFilterLabel(key as keyof FilterState, value)}
+                    <button
+                      onClick={() => handleRemoveFilter(key as keyof FilterState)}
+                      className="ml-1 hover:text-primary-900"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  </span>
+                );
+              })}
+              <button
+                onClick={handleClearFilters}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                {t('models.clearFilters')}
+              </button>
+            </div>
+          )}
         </Card>
+
+        {/* Extended Filter Panel */}
+        {showFilters && (
+          <Card>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">{t('common.filters')}</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Model Number */}
+                <div>
+                  <label className="label">{t('models.filterByModelNumber')}</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder={t('models.filterModelNumberPlaceholder')}
+                    value={filters.modelNumber}
+                    onChange={(e) => setFilters({ ...filters, modelNumber: e.target.value })}
+                  />
+                </div>
+
+                {/* Model Name */}
+                <div>
+                  <label className="label">{t('models.filterByModelName')}</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder={t('models.filterModelNamePlaceholder')}
+                    value={filters.modelName}
+                    onChange={(e) => setFilters({ ...filters, modelName: e.target.value })}
+                  />
+                </div>
+
+                {/* Collection */}
+                <div>
+                  <label className="label">{t('models.filterByCollection')}</label>
+                  <select
+                    className="input"
+                    value={filters.collectionId}
+                    onChange={(e) => setFilters({ ...filters, collectionId: e.target.value })}
+                  >
+                    <option value="">{t('models.allCollections')}</option>
+                    {collections.map((col) => (
+                      <option key={col.id} value={col.id}>
+                        {col.name} {col.season_code ? `(${col.season_code})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="label">{t('models.filterByStatus')}</label>
+                  <select
+                    className="input"
+                    value={filters.status}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  >
+                    <option value="">{t('models.allStatuses')}</option>
+                    <option value="draft">{t('statuses.draft')}</option>
+                    <option value="under_review">{t('statuses.under_review')}</option>
+                    <option value="approved">{t('statuses.approved')}</option>
+                    <option value="ds">{t('statuses.ds_stage')}</option>
+                    <option value="pps">{t('statuses.pps_stage')}</option>
+                    <option value="in_production">{t('statuses.in_production')}</option>
+                  </select>
+                </div>
+
+                {/* Buyer Approval */}
+                <div>
+                  <label className="label">{t('models.filterByBuyerApproval')}</label>
+                  <select
+                    className="input"
+                    value={filters.buyerApproval}
+                    onChange={(e) => setFilters({ ...filters, buyerApproval: e.target.value })}
+                  >
+                    <option value="">{t('models.allApprovals')}</option>
+                    <option value="pending">{t('approval.pending')}</option>
+                    <option value="approved">{t('approval.approved')}</option>
+                    <option value="approved_with_comments">{t('approval.approvedWithComments')}</option>
+                    <option value="not_approved">{t('approval.notApproved')}</option>
+                  </select>
+                </div>
+
+                {/* Constructor Approval */}
+                <div>
+                  <label className="label">{t('models.filterByConstructorApproval')}</label>
+                  <select
+                    className="input"
+                    value={filters.constructorApproval}
+                    onChange={(e) => setFilters({ ...filters, constructorApproval: e.target.value })}
+                  >
+                    <option value="">{t('models.allApprovals')}</option>
+                    <option value="pending">{t('approval.pending')}</option>
+                    <option value="approved">{t('approval.approved')}</option>
+                    <option value="approved_with_comments">{t('approval.approvedWithComments')}</option>
+                    <option value="not_approved">{t('approval.notApproved')}</option>
+                  </select>
+                </div>
+
+                {/* Product Type */}
+                <div>
+                  <label className="label">{t('models.filterByType')}</label>
+                  <select
+                    className="input"
+                    value={filters.productType}
+                    onChange={(e) => setFilters({ ...filters, productType: e.target.value })}
+                  >
+                    <option value="">{t('models.allTypes')}</option>
+                    <option value="textile">Textile</option>
+                    <option value="denim">Denim</option>
+                    <option value="sweater">Sweater</option>
+                    <option value="knitwear">Knitwear</option>
+                  </select>
+                </div>
+
+                {/* Date Range */}
+                <div>
+                  <label className="label">{t('models.filterByDateFrom')}</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={filters.dateFrom}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">{t('models.filterByDateTo')}</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={filters.dateTo}
+                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleClearFilters}
+                >
+                  {t('models.clearFilters')}
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleApplyFilters}
+                >
+                  {t('models.applyFilters')}
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Models Table */}
         <Card>
@@ -239,7 +572,7 @@ export const Models = () => {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            {/* Миниатюра скетча */}
+                            {/* Sketch thumbnail */}
                             <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                               {(model as any).sketch_url ? (
                                 <img
@@ -260,12 +593,12 @@ export const Models = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {model.model_name || '—'}
+                            {model.model_name || '\u2014'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {model.collection_name || '—'}
+                            {model.collection_name || '\u2014'}
                           </div>
                           <div className="text-xs text-gray-500">
                             {model.season_code}

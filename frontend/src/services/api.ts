@@ -86,6 +86,13 @@ export const modelsApi = {
     collection_id?: number;
     status?: string;
     product_type?: string;
+    search?: string;
+    buyer_approval?: string;
+    constructor_approval?: string;
+    date_from?: string;
+    date_to?: string;
+    model_name?: string;
+    model_number?: string;
     page?: number;
     limit?: number;
   }) => {
