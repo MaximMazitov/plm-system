@@ -45,9 +45,22 @@ const translations = {
     approvalReceived: 'Получено решение по согласованию модели:',
     commentLabel: 'Комментарий:',
 
+    // Comment notification email
+    commentSubject: (modelNumber: string, authorName: string) =>
+      `PLM: Модель ${modelNumber} - новый комментарий от ${authorName}`,
+    commentHeader: 'Новый комментарий',
+    commentReceived: 'К модели оставлен новый комментарий:',
+    commentAuthorLabel: 'Автор:',
+    commentTextLabel: 'Комментарий:',
+    commentHasAttachments: 'К комментарию прикреплены файлы.',
+
     // Roles
     buyer: 'Байер',
     constructor: 'Конструктор',
+    designer: 'Дизайнер',
+    china_office: 'China Office',
+    factory: 'Фабрика',
+    manager: 'Менеджер',
 
     // Statuses
     statuses: {
@@ -93,9 +106,22 @@ const translations = {
     approvalReceived: 'Approval decision received for model:',
     commentLabel: 'Comment:',
 
+    // Comment notification email
+    commentSubject: (modelNumber: string, authorName: string) =>
+      `PLM: Model ${modelNumber} - new comment from ${authorName}`,
+    commentHeader: 'New Comment',
+    commentReceived: 'A new comment has been added to the model:',
+    commentAuthorLabel: 'Author:',
+    commentTextLabel: 'Comment:',
+    commentHasAttachments: 'Files are attached to the comment.',
+
     // Roles
     buyer: 'Buyer',
     constructor: 'Constructor',
+    designer: 'Designer',
+    china_office: 'China Office',
+    factory: 'Factory',
+    manager: 'Manager',
 
     // Statuses
     statuses: {
@@ -339,6 +365,79 @@ class EmailService {
           <span class="${approvalStatus.includes('approved') ? 'status-approved' : approvalStatus === 'not_approved' ? 'status-rejected' : 'status-pending'}">${localizedApprovalLabel}</span>
         </p>
         ${comment ? `<div class="comment"><span class="label">${t.commentLabel}</span><br>${comment}</div>` : ''}
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${modelUrl}" class="button">${t.openModel}</a>
+      </p>
+    </div>
+    <div class="footer">
+      <p>${t.autoMessage}</p>
+      <p>${t.noReply}</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail(to, subject, htmlContent);
+  }
+
+  /**
+   * Отправляет уведомление о новом комментарии к модели
+   * @param language - язык письма ('ru' для русского, 'en' для английского)
+   */
+  async sendCommentEmail(
+    to: string,
+    recipientName: string,
+    modelNumber: string,
+    modelName: string,
+    authorName: string,
+    authorRole: string,
+    commentText: string,
+    hasAttachments: boolean,
+    modelUrl: string,
+    language: Language = 'ru'
+  ): Promise<SendEmailResult> {
+    const t = translations[language];
+    const subject = t.commentSubject(modelNumber, authorName);
+    const roleLabel = (t as any)[authorRole] || authorRole;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #7c3aed; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f5f5f5; padding: 20px; border-radius: 0 0 8px 8px; }
+    .model-info { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .model-info p { margin: 8px 0; }
+    .label { font-weight: bold; color: #666; }
+    .role-badge { display: inline-block; padding: 3px 10px; background: #e8e0f3; color: #7c3aed; border-radius: 12px; font-size: 13px; }
+    .comment-box { background: #f3f0ff; padding: 12px; border-left: 4px solid #7c3aed; margin: 10px 0; white-space: pre-wrap; }
+    .attachments { color: #888; font-style: italic; margin-top: 8px; }
+    .button { display: inline-block; padding: 12px 30px; background: #7c3aed; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+    .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>PLM System</h1>
+      <p>${t.commentHeader}</p>
+    </div>
+    <div class="content">
+      <p>${t.statusGreeting(recipientName)}</p>
+      <p>${t.commentReceived}</p>
+
+      <div class="model-info">
+        <p><span class="label">${t.modelLabel}</span> ${modelNumber} - ${modelName || 'N/A'}</p>
+        <p><span class="label">${t.commentAuthorLabel}</span> ${authorName} <span class="role-badge">${roleLabel}</span></p>
+        ${commentText ? `<div class="comment-box"><span class="label">${t.commentTextLabel}</span><br>${commentText}</div>` : ''}
+        ${hasAttachments ? `<p class="attachments">${t.commentHasAttachments}</p>` : ''}
       </div>
 
       <p style="text-align: center;">

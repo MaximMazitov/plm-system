@@ -371,6 +371,110 @@ class NotificationService {
       }
     }
   }
+  /**
+   * Отправить уведомление о новом комментарии к модели
+   *
+   * Правила:
+   * - Если комментарий от designer/manager/constructor/buyer → уведомление china_office + factory
+   * - Если комментарий от china_office/factory → уведомление constructor + buyer
+   */
+  async sendCommentNotification(
+    modelId: number,
+    commentAuthorId: number,
+    commentAuthorName: string,
+    commentAuthorRole: string,
+    commentText: string,
+    hasAttachments: boolean
+  ): Promise<void> {
+    if (!emailService.isConfigured()) return;
+
+    const modelInfo = await this.getModelInfo(modelId);
+    if (!modelInfo) return;
+
+    // Определяем кому отправлять уведомление по роли автора комментария
+    let rolesToNotify: UserRole[] = [];
+
+    const internalRoles = ['designer', 'manager', 'constructor', 'buyer'];
+    const externalRoles = ['china_office', 'factory'];
+
+    if (internalRoles.includes(commentAuthorRole)) {
+      // Дизайнер/Менеджер/Конструктор/Байер → оповещение china_office + factory
+      rolesToNotify = ['china_office', 'factory'];
+    } else if (externalRoles.includes(commentAuthorRole)) {
+      // China Office/Фабрика → оповещение constructor + buyer
+      rolesToNotify = ['constructor', 'buyer'];
+    }
+
+    if (rolesToNotify.length === 0) return;
+
+    // Собираем всех получателей
+    const allRecipients: NotificationRecipient[] = [];
+    for (const role of rolesToNotify) {
+      const recipients = await this.getRecipientsByRole(role, modelInfo.assigned_factory_id);
+      allRecipients.push(...recipients);
+    }
+
+    // Убираем дубликаты (по user_id) и исключаем автора комментария
+    const uniqueRecipients = allRecipients
+      .filter(
+        (recipient, index, self) =>
+          index === self.findIndex(r => r.user_id === recipient.user_id)
+      )
+      .filter(r => r.user_id !== commentAuthorId);
+
+    if (uniqueRecipients.length === 0) return;
+
+    const modelUrl = `${this.frontendUrl}/models/${modelId}`;
+
+    console.log(`[Notifications] Sending comment notifications for model ${modelId} by ${commentAuthorName} (${commentAuthorRole}) to ${uniqueRecipients.length} recipients`);
+
+    // Отправляем уведомления
+    for (const recipient of uniqueRecipients) {
+      try {
+        const language = getLanguageForRole(recipient.role);
+
+        const sendResult = await emailService.sendCommentEmail(
+          recipient.email,
+          recipient.full_name,
+          modelInfo.model_number,
+          modelInfo.model_name,
+          commentAuthorName,
+          commentAuthorRole,
+          commentText,
+          hasAttachments,
+          modelUrl,
+          language
+        );
+
+        if (sendResult.success) {
+          await this.logNotification(
+            modelId,
+            recipient.user_id,
+            'comment',
+            `Новый комментарий к модели ${modelInfo.model_number}`,
+            `${commentAuthorName}: ${commentText?.substring(0, 200) || '(файлы)'}`,
+            'sent',
+            sendResult.messageId
+          );
+          console.log(`Comment notification sent to ${recipient.full_name} (${recipient.email})`);
+        } else {
+          await this.logNotification(
+            modelId,
+            recipient.user_id,
+            'comment',
+            `Новый комментарий к модели ${modelInfo.model_number}`,
+            `${commentAuthorName}: ${commentText?.substring(0, 200) || '(файлы)'}`,
+            'failed',
+            undefined,
+            sendResult.error
+          );
+          console.error(`Failed to send comment notification to ${recipient.full_name}: ${sendResult.error}`);
+        }
+      } catch (error: any) {
+        console.error(`Exception sending comment notification to ${recipient.full_name}:`, error);
+      }
+    }
+  }
 }
 
 export const notificationService = new NotificationService();

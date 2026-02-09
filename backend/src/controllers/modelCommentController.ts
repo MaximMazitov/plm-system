@@ -5,6 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { uploadToR2, deleteFromR2, extractKeyFromUrl, isR2Configured } from '../services/r2Storage';
+import { notificationService } from '../services/notificationService';
 
 // Configure multer - use memory storage for R2
 const commentStorage = isR2Configured()
@@ -262,9 +263,26 @@ export const createModelComment = async (req: AuthRequest, res: Response) => {
       [commentId]
     );
 
+    const createdComment = commentWithUser.rows[0];
+
+    // Send email notifications asynchronously (don't block response)
+    // Rules:
+    // - Designer/Manager/Constructor/Buyer comment → notify China Office + Factory
+    // - China Office/Factory comment → notify Constructor + Buyer
+    if (createdComment && userId) {
+      notificationService.sendCommentNotification(
+        Number(modelId),
+        userId,
+        createdComment.full_name,
+        createdComment.role,
+        commentTextValue,
+        uploadedFiles.length > 0
+      ).catch(err => console.error('Comment notification error:', err));
+    }
+
     return res.status(201).json({
       success: true,
-      data: { ...commentWithUser.rows[0], files: uploadedFiles },
+      data: { ...createdComment, files: uploadedFiles },
       message: 'Comment created successfully'
     });
   } catch (error) {
