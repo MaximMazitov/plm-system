@@ -45,29 +45,56 @@ const defaultFilters: FilterState = {
   dateTo: '',
 };
 
+// Mapping between FilterState keys and URL param names
+const filterParamMap: Record<keyof FilterState, string> = {
+  modelNumber: 'model_number',
+  modelName: 'model_name',
+  collectionId: 'collection_id',
+  status: 'f_status',
+  buyerApproval: 'buyer_approval',
+  constructorApproval: 'constructor_approval',
+  productType: 'product_type',
+  dateFrom: 'date_from',
+  dateTo: 'date_to',
+};
+
 interface CollectionOption {
   id: number;
   name: string;
   season_code?: string;
 }
 
+// Read filters from URL search params
+const readFiltersFromUrl = (searchParams: URLSearchParams): FilterState => {
+  const filters: FilterState = { ...defaultFilters };
+  for (const [key, paramName] of Object.entries(filterParamMap)) {
+    const value = searchParams.get(paramName);
+    if (value) {
+      filters[key as keyof FilterState] = value;
+    }
+  }
+  return filters;
+};
+
 export const Models = () => {
   const { t, i18n } = useTranslation();
   const { hasPermission } = usePermissionsStore();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ModelStatus | 'all'>('all');
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
 
-  // Filter panel state
+  // Read all state from URL
+  const searchTerm = searchParams.get('search') || '';
+  const statusFilter = (searchParams.get('status') as ModelStatus | 'all') || 'all';
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const appliedFilters = readFiltersFromUrl(searchParams);
+
+  // Filter panel state (local only, not in URL until applied)
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters });
-  const [appliedFilters, setAppliedFilters] = useState<FilterState>({ ...defaultFilters });
+  const [filters, setFilters] = useState<FilterState>({ ...appliedFilters });
   const [collections, setCollections] = useState<CollectionOption[]>([]);
 
   // Count active filters
@@ -75,10 +102,29 @@ export const Models = () => {
     ([, value]) => value !== ''
   ).length;
 
+  // Helper to update URL params without losing existing ones
+  const updateSearchParams = (updates: Record<string, string | null>) => {
+    const newParams = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === '' || value === 'all') {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, value);
+      }
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
   // Load collections for dropdown
   useEffect(() => {
     loadCollections();
   }, []);
+
+  // Sync local filters state when URL changes (e.g. browser back)
+  useEffect(() => {
+    const urlFilters = readFiltersFromUrl(searchParams);
+    setFilters(urlFilters);
+  }, [searchParams]);
 
   const loadCollections = async () => {
     try {
@@ -91,17 +137,10 @@ export const Models = () => {
     }
   };
 
-  // Read status from URL on load
-  useEffect(() => {
-    const statusFromUrl = searchParams.get('status');
-    if (statusFromUrl && statusFromUrl !== 'all') {
-      setStatusFilter(statusFromUrl as ModelStatus);
-    }
-  }, [searchParams]);
-
+  // Load models whenever URL params change
   useEffect(() => {
     loadModels();
-  }, [page, statusFilter, appliedFilters]);
+  }, [searchParams]);
 
   const loadModels = async () => {
     try {
@@ -116,7 +155,7 @@ export const Models = () => {
         params.search = searchTerm;
       }
 
-      // Apply advanced filters
+      // Apply advanced filters from URL
       if (appliedFilters.modelNumber) {
         params.model_number = appliedFilters.modelNumber;
       }
@@ -158,30 +197,49 @@ export const Models = () => {
     }
   };
 
-  const handleSearch = () => {
-    setPage(1);
+  const handleSearchChange = (value: string) => {
+    updateSearchParams({ search: value || null, page: null });
+  };
+
+  const handleSearchSubmit = () => {
+    updateSearchParams({ page: null });
+    // Force reload if search term didn't change the URL
     loadModels();
   };
 
+  const handleStatusFilterChange = (value: string) => {
+    updateSearchParams({ status: value === 'all' ? null : value, page: null });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    updateSearchParams({ page: newPage > 1 ? newPage.toString() : null });
+  };
+
   const handleApplyFilters = () => {
-    setAppliedFilters({ ...filters });
-    setPage(1);
+    const updates: Record<string, string | null> = { page: null };
+    for (const [key, paramName] of Object.entries(filterParamMap)) {
+      const value = filters[key as keyof FilterState];
+      updates[paramName] = value || null;
+    }
+    updateSearchParams(updates);
     setShowFilters(false);
   };
 
   const handleClearFilters = () => {
+    const updates: Record<string, string | null> = { page: null, status: null, search: null };
+    for (const paramName of Object.values(filterParamMap)) {
+      updates[paramName] = null;
+    }
     setFilters({ ...defaultFilters });
-    setAppliedFilters({ ...defaultFilters });
-    setStatusFilter('all');
-    setPage(1);
+    updateSearchParams(updates);
     setShowFilters(false);
   };
 
   const handleRemoveFilter = (key: keyof FilterState) => {
-    const updated = { ...appliedFilters, [key]: '' };
-    setAppliedFilters(updated);
-    setFilters(updated);
-    setPage(1);
+    const paramName = filterParamMap[key];
+    const updatedFilters = { ...filters, [key]: '' };
+    setFilters(updatedFilters);
+    updateSearchParams({ [paramName]: null, page: null });
   };
 
   const getFilterLabel = (key: keyof FilterState, value: string): string => {
@@ -276,12 +334,12 @@ export const Models = () => {
                   className="input flex-1"
                   placeholder={t('models.searchPlaceholder')}
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
                 />
                 <button
                   className="btn btn-secondary"
-                  onClick={handleSearch}
+                  onClick={handleSearchSubmit}
                 >
                   <Search className="w-5 h-5" />
                 </button>
@@ -294,10 +352,7 @@ export const Models = () => {
               <select
                 className="input"
                 value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as ModelStatus | 'all');
-                  setPage(1);
-                }}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
               >
                 <option value="all">{t('models.allStatuses')}</option>
                 <option value="draft">{t('statuses.draft')}</option>
@@ -635,14 +690,14 @@ export const Models = () => {
                 <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
-                      onClick={() => setPage(page - 1)}
+                      onClick={() => handlePageChange(page - 1)}
                       disabled={page === 1}
                       className="btn btn-secondary"
                     >
                       {t('common.previous')}
                     </button>
                     <button
-                      onClick={() => setPage(page + 1)}
+                      onClick={() => handlePageChange(page + 1)}
                       disabled={page === totalPages}
                       className="btn btn-secondary"
                     >
@@ -658,14 +713,14 @@ export const Models = () => {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setPage(page - 1)}
+                        onClick={() => handlePageChange(page - 1)}
                         disabled={page === 1}
                         className="btn btn-secondary"
                       >
                         {t('common.previous')}
                       </button>
                       <button
-                        onClick={() => setPage(page + 1)}
+                        onClick={() => handlePageChange(page + 1)}
                         disabled={page === totalPages}
                         className="btn btn-secondary"
                       >
