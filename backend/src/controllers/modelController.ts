@@ -133,8 +133,8 @@ export const getModels = async (req: AuthRequest, res: Response) => {
     if (userRole === 'factory' && factoryId) {
       whereConditions.push(`m.assigned_factory_id = $${paramIndex++}`);
       params.push(factoryId);
-      // Only show approved models to factory
-      whereConditions.push(`m.status IN ('approved', 'ds_stage', 'pps_stage', 'in_production', 'shipped')`);
+      // Only show models from approved stage onwards to factory
+      whereConditions.push(`m.status IN ('approved', 'ds', 'ds_stage', 'pps', 'pps_stage', 'in_production', 'shipped')`);
     }
 
     if (collection_id) {
@@ -290,9 +290,9 @@ export const getModelById = async (req: AuthRequest, res: Response) => {
 
     const model = result.rows[0];
 
-    // Check factory access
+    // Check factory access - factory users can only view models assigned to their factory
     if (userRole === 'factory') {
-      if (model.assigned_factory_id !== factoryId) {
+      if (!factoryId || Number(model.assigned_factory_id) !== Number(factoryId)) {
         return res.status(403).json({
           success: false,
           error: 'Access denied'
