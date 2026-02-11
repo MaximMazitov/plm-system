@@ -16,7 +16,7 @@ const storage = multer.memoryStorage();
 export const upload = multer({
   storage,
   limits: {
-    fileSize: 250 * 1024 * 1024 // 250MB for large AI/pattern files
+    fileSize: 500 * 1024 * 1024 // 500MB for large AI/pattern files
   }
 });
 
