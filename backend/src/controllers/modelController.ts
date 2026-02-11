@@ -383,8 +383,8 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
       const statusRoleMap: Record<string, string[]> = {
         'under_review': ['buyer', 'constructor', 'designer', 'manager'],
         'approved': ['buyer', 'constructor', 'manager'],
-        'ds_stage': ['buyer', 'constructor'],
-        'ds': ['buyer', 'constructor'],
+        'ds_stage': ['buyer', 'constructor', 'manager'],
+        'ds': ['buyer', 'constructor', 'manager'],
         'pps_stage': ['buyer', 'china_office'],
         'pps': ['buyer', 'china_office'],
         'in_production': ['buyer', 'constructor'],
