@@ -353,7 +353,9 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
       fit_type,
       product_group,
       product_group_code,
-      status
+      status,
+      brand,
+      prototype_number
     } = req.body;
 
     // Get current model
@@ -410,10 +412,12 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
            product_group = COALESCE($5, product_group),
            product_group_code = COALESCE($6, product_group_code),
            status = COALESCE($7, status),
+           brand = COALESCE($8, brand),
+           prototype_number = COALESCE($9, prototype_number),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8
+       WHERE id = $10
        RETURNING *`,
-      [model_name, product_type, category, fit_type, finalProductGroup, finalProductGroupCode, status, id]
+      [model_name, product_type, category, fit_type, finalProductGroup, finalProductGroupCode, status, brand, prototype_number, id]
     );
 
     // Log status change and send notifications
