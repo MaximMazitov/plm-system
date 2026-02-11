@@ -381,8 +381,8 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
     // Status change role restrictions
     if (status && status !== currentModel.status) {
       const statusRoleMap: Record<string, string[]> = {
-        'under_review': ['buyer', 'constructor', 'designer'],
-        'approved': ['buyer', 'constructor'],
+        'under_review': ['buyer', 'constructor', 'designer', 'manager'],
+        'approved': ['buyer', 'constructor', 'manager'],
         'ds_stage': ['buyer', 'constructor'],
         'ds': ['buyer', 'constructor'],
         'pps_stage': ['buyer', 'china_office'],

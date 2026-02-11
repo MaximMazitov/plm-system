@@ -13,9 +13,9 @@ import { useAuthStore } from '../store/authStore';
 
 // Status change role restrictions map
 const statusRoleMap: Record<string, string[]> = {
-  'draft': ['buyer', 'constructor', 'designer', 'china_office'],
-  'under_review': ['buyer', 'constructor', 'designer'],
-  'approved': ['buyer', 'constructor'],
+  'draft': ['buyer', 'constructor', 'designer', 'manager', 'china_office'],
+  'under_review': ['buyer', 'constructor', 'designer', 'manager'],
+  'approved': ['buyer', 'constructor', 'manager'],
   'ds': ['buyer', 'constructor'],
   'pps': ['buyer', 'china_office'],
   'in_production': ['buyer', 'constructor'],
