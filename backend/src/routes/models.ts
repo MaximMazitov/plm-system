@@ -4,6 +4,7 @@ import {
   getModels,
   getModelById,
   updateModel,
+  updateModelStatus,
   deleteModel,
   assignFactory,
   updateBuyerApproval,
@@ -61,6 +62,13 @@ router.put(
   '/:id',
   checkPermission('can_edit_models'),
   updateModel
+);
+
+// Update model status only (separate permission)
+router.patch(
+  '/:id/status',
+  checkPermission('can_edit_model_status'),
+  updateModelStatus
 );
 
 // Partial update model (PATCH)

@@ -451,6 +451,75 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Separate endpoint for status change only (uses can_edit_model_status permission)
+export const updateModelStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ success: false, error: 'Status is required' });
+    }
+
+    const current = await pool.query('SELECT * FROM models WHERE id = $1', [id]);
+    if (current.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Model not found' });
+    }
+
+    const currentModel = current.rows[0];
+
+    if (status === currentModel.status) {
+      return res.status(200).json({ success: true, data: currentModel, message: 'Status unchanged' });
+    }
+
+    // Status change role restrictions
+    const statusRoleMap: Record<string, string[]> = {
+      'under_review': ['buyer', 'constructor', 'designer', 'manager'],
+      'approved': ['buyer', 'constructor', 'manager'],
+      'ds_stage': ['buyer', 'constructor', 'manager'],
+      'ds': ['buyer', 'constructor', 'manager'],
+      'pps_stage': ['buyer', 'china_office'],
+      'pps': ['buyer', 'china_office'],
+      'in_production': ['buyer', 'constructor'],
+    };
+
+    const allowedRoles = statusRoleMap[status];
+    if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        error: `Role "${userRole}" is not allowed to set status "${status}"`
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE models SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+
+    // Log status change
+    await pool.query(
+      `INSERT INTO status_history (model_id, from_status, to_status, changed_by) VALUES ($1, $2, $3, $4)`,
+      [id, currentModel.status, status, userId]
+    );
+
+    // Send notifications asynchronously
+    notificationService.sendStatusChangeNotifications(
+      Number(id), status, userId
+    ).catch(err => console.error('Notification error:', err));
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows[0],
+      message: 'Status updated successfully'
+    });
+  } catch (error: any) {
+    console.error('Update model status error:', error);
+    return res.status(500).json({ success: false, error: 'Server error', details: error.message });
+  }
+};
+
 export const deleteModel = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;

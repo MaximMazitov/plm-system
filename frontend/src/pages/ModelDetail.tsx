@@ -352,7 +352,7 @@ export const ModelDetail = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/models/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/models/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
