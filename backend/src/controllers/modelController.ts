@@ -102,6 +102,8 @@ export const getModels = async (req: AuthRequest, res: Response) => {
   try {
     const {
       collection_id,
+      collection_type,
+      age_group,
       status,
       product_type,
       model_id,
@@ -140,6 +142,27 @@ export const getModels = async (req: AuthRequest, res: Response) => {
     if (collection_id) {
       whereConditions.push(`m.collection_id = $${paramIndex++}`);
       params.push(collection_id);
+    }
+
+    // Filter by collection type (men, women, boys, girls, babies)
+    if (collection_type && typeof collection_type === 'string') {
+      if (collection_type === 'men') {
+        whereConditions.push(`c.type = 'men'`);
+      } else if (collection_type === 'women') {
+        whereConditions.push(`c.type = 'women'`);
+      } else if (collection_type === 'boys') {
+        whereConditions.push(`c.type = 'kids' AND c.gender = 'boys'`);
+      } else if (collection_type === 'girls') {
+        whereConditions.push(`c.type = 'kids' AND c.gender = 'girls'`);
+      } else if (collection_type === 'babies') {
+        whereConditions.push(`c.type = 'kids' AND c.gender = 'babies'`);
+      }
+    }
+
+    // Filter by age group (for kids collections)
+    if (age_group && typeof age_group === 'string') {
+      whereConditions.push(`c.age_group = $${paramIndex++}`);
+      params.push(age_group);
     }
 
     if (status) {
@@ -199,11 +222,15 @@ export const getModels = async (req: AuthRequest, res: Response) => {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
+    // Need to join collections table in count query if filtering by collection type/age
+    const needsCollectionJoin = !!(collection_type || age_group);
+    const countJoin = needsCollectionJoin ? 'LEFT JOIN collections c ON m.collection_id = c.id' : '';
+
     const offset = (Number(page) - 1) * Number(limit);
 
     // Get total count
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM models m ${whereClause}`,
+      `SELECT COUNT(*) FROM models m ${countJoin} ${whereClause}`,
       params
     );
     const total = parseInt(countResult.rows[0].count);

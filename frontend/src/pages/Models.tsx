@@ -23,6 +23,8 @@ interface FilterState {
   modelNumber: string;
   modelName: string;
   collectionId: string;
+  collectionType: string;
+  ageGroup: string;
   status: string;
   buyerApproval: string;
   constructorApproval: string;
@@ -35,6 +37,8 @@ const defaultFilters: FilterState = {
   modelNumber: '',
   modelName: '',
   collectionId: '',
+  collectionType: '',
+  ageGroup: '',
   status: '',
   buyerApproval: '',
   constructorApproval: '',
@@ -48,6 +52,8 @@ const filterParamMap: Record<keyof FilterState, string> = {
   modelNumber: 'model_number',
   modelName: 'model_name',
   collectionId: 'collection_id',
+  collectionType: 'collection_type',
+  ageGroup: 'age_group',
   status: 'f_status',
   buyerApproval: 'buyer_approval',
   constructorApproval: 'constructor_approval',
@@ -169,6 +175,8 @@ export const Models = () => {
       if (currentFilters.modelNumber) params.model_number = currentFilters.modelNumber;
       if (currentFilters.modelName) params.model_name = currentFilters.modelName;
       if (currentFilters.collectionId) params.collection_id = currentFilters.collectionId;
+      if (currentFilters.collectionType) params.collection_type = currentFilters.collectionType;
+      if (currentFilters.ageGroup) params.age_group = currentFilters.ageGroup;
       if (currentFilters.status) params.status = currentFilters.status;
       if (currentFilters.buyerApproval) params.buyer_approval = currentFilters.buyerApproval;
       if (currentFilters.constructorApproval) params.constructor_approval = currentFilters.constructorApproval;
@@ -225,9 +233,15 @@ export const Models = () => {
 
   const handleRemoveFilter = (key: keyof FilterState) => {
     const paramName = filterParamMap[key];
+    const updates: Record<string, string | null> = { [paramName]: null, page: null };
     const updatedFilters = { ...filters, [key]: '' };
+    // Clear age group when collection type is removed
+    if (key === 'collectionType') {
+      updatedFilters.ageGroup = '';
+      updates[filterParamMap.ageGroup] = null;
+    }
     setFilters(updatedFilters);
-    updateSearchParams({ [paramName]: null, page: null });
+    updateSearchParams(updates);
   };
 
   const getFilterLabel = (key: keyof FilterState, value: string): string => {
@@ -240,6 +254,18 @@ export const Models = () => {
         const col = collections.find(c => c.id.toString() === value);
         return `${t('models.filterByCollection')}: ${col?.name || value}`;
       }
+      case 'collectionType': {
+        const typeLabels: Record<string, string> = {
+          men: t('models.menCollection'),
+          women: t('models.womenCollection'),
+          girls: t('models.girls'),
+          boys: t('models.boys'),
+          babies: t('models.babies'),
+        };
+        return `${t('models.filterByCollectionType')}: ${typeLabels[value] || value}`;
+      }
+      case 'ageGroup':
+        return `${t('models.filterByAgeGroup')}: ${value}`;
       case 'status':
         return `${t('models.filterByStatus')}: ${t(`statuses.${value}`)}`;
       case 'buyerApproval':
@@ -455,6 +481,43 @@ export const Models = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Collection Type */}
+                <div>
+                  <label className="label">{t('models.filterByCollectionType')}</label>
+                  <select
+                    className="input"
+                    value={filters.collectionType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const needsAge = val === 'girls' || val === 'boys';
+                      setFilters({ ...filters, collectionType: val, ageGroup: needsAge ? filters.ageGroup : '' });
+                    }}
+                  >
+                    <option value="">{t('models.allCollectionTypes')}</option>
+                    <option value="men">{t('models.menCollection')}</option>
+                    <option value="women">{t('models.womenCollection')}</option>
+                    <option value="girls">{t('models.girls')}</option>
+                    <option value="boys">{t('models.boys')}</option>
+                    <option value="babies">{t('models.babies')}</option>
+                  </select>
+                </div>
+
+                {/* Age Group (only for boys/girls) */}
+                {(filters.collectionType === 'boys' || filters.collectionType === 'girls') && (
+                  <div>
+                    <label className="label">{t('models.filterByAgeGroup')}</label>
+                    <select
+                      className="input"
+                      value={filters.ageGroup}
+                      onChange={(e) => setFilters({ ...filters, ageGroup: e.target.value })}
+                    >
+                      <option value="">{t('models.allAgeGroups')}</option>
+                      <option value="2-7">{t('models.age27')}</option>
+                      <option value="7-14">{t('models.age714')}</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* Status */}
                 <div>
