@@ -434,7 +434,7 @@ export async function initializeSchema() {
           CASE WHEN role IN ('designer', 'buyer') THEN true ELSE false END,
           CASE WHEN role IN ('designer', 'constructor', 'buyer') THEN true ELSE false END,
           CASE WHEN role = 'buyer' THEN true ELSE false END,
-          CASE WHEN role = 'buyer' THEN true ELSE false END,
+          CASE WHEN role IN ('buyer', 'constructor', 'designer', 'manager', 'china_office') THEN true ELSE false END,
           true, -- can_view_files
           CASE WHEN role IN ('designer', 'constructor', 'china_office', 'buyer') THEN true ELSE false END,
           CASE WHEN role IN ('buyer', 'designer') THEN true ELSE false END,
@@ -534,6 +534,12 @@ export async function initializeSchema() {
         SET can_approve_as_buyer = TRUE
         WHERE user_id IN (SELECT id FROM users WHERE role = 'buyer')
           AND can_approve_as_buyer = FALSE;
+
+        -- Обновляем can_edit_model_status для ролей которые могут менять статус
+        UPDATE user_permissions
+        SET can_edit_model_status = TRUE
+        WHERE user_id IN (SELECT id FROM users WHERE role IN ('constructor', 'designer', 'manager', 'china_office'))
+          AND can_edit_model_status = FALSE;
 
         -- Обновляем CHECK constraint для users.role чтобы включить manager
         ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
