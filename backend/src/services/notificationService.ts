@@ -107,8 +107,13 @@ class NotificationService {
       let query: string;
       let params: any[];
 
-      if (role === 'factory' && factoryId) {
-        // Для фабрики - получаем пользователей конкретной фабрики
+      if (role === 'factory') {
+        if (!factoryId) {
+          // Модель не назначена на фабрику — не отправляем уведомление фабрикам
+          console.log(`[Notifications] Skipping factory notifications - model not assigned to any factory`);
+          return [];
+        }
+        // Для фабрики - получаем пользователей только назначенной фабрики
         console.log(`[Notifications] Looking for factory users with factory_id=${factoryId}`);
         query = `
           SELECT id as user_id, email, full_name, role
