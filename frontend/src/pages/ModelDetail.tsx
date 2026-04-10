@@ -500,6 +500,85 @@ export const ModelDetail = () => {
     }
   };
 
+  const [editingModelNumber, setEditingModelNumber] = useState(false);
+  const [editingProductType, setEditingProductType] = useState(false);
+  const [editedModelNumber, setEditedModelNumber] = useState('');
+  const [selectedProductType, setSelectedProductType] = useState('');
+  const [productTypes, setProductTypes] = useState<Array<{value: string, label: string}>>([]);
+
+  useEffect(() => {
+    loadProductTypes();
+  }, []);
+
+  const loadProductTypes = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/reference-data/product_type`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setProductTypes(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load product types:', error);
+    }
+  };
+
+  const updateModelNumber = async () => {
+    if (!editedModelNumber || editedModelNumber === model?.model_number) {
+      setEditingModelNumber(false);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/models/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ model_number: editedModelNumber })
+      });
+      if (response.ok) {
+        await loadModelData();
+        setEditingModelNumber(false);
+      } else {
+        alert(t('modelDetail.saveError'));
+      }
+    } catch (error) {
+      console.error('Failed to update model number:', error);
+      alert(t('modelDetail.saveError'));
+    }
+  };
+
+  const updateProductType = async () => {
+    if (!selectedProductType || selectedProductType === model?.product_type) {
+      setEditingProductType(false);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/models/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ product_type: selectedProductType })
+      });
+      if (response.ok) {
+        await loadModelData();
+        setEditingProductType(false);
+      } else {
+        alert(t('modelDetail.saveError'));
+      }
+    } catch (error) {
+      console.error('Failed to update product type:', error);
+      alert(t('modelDetail.saveError'));
+    }
+  };
+
   const handleEditMode = () => {
     setIsEditMode(true);
     setEditedModel({
@@ -537,6 +616,8 @@ export const ModelDetail = () => {
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditedModel({});
+    setEditingModelNumber(false);
+    setEditingProductType(false);
   };
 
   const updateCategory = async () => {
@@ -801,7 +882,44 @@ export const ModelDetail = () => {
               {t('common.back')}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{model.model_number}</h1>
+              <div className="flex items-center gap-2">
+                {editingModelNumber ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedModelNumber}
+                      onChange={(e) => setEditedModelNumber(e.target.value)}
+                      className="text-3xl font-bold text-gray-900 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') updateModelNumber();
+                        if (e.key === 'Escape') setEditingModelNumber(false);
+                      }}
+                      autoFocus
+                    />
+                    <button onClick={updateModelNumber} className="text-green-600 hover:text-green-700">
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => setEditingModelNumber(false)} className="text-gray-400 hover:text-gray-600">
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-3xl font-bold text-gray-900">{model.model_number}</h1>
+                    {isEditMode && (
+                      <button
+                        onClick={() => {
+                          setEditedModelNumber(model.model_number);
+                          setEditingModelNumber(true);
+                        }}
+                        className="text-primary-600 hover:text-primary-700"
+                      >
+                        <Pencil className="w-5 h-5" />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
               <p className="text-gray-600 mt-1">{model.model_name || t('modelDetail.noName')}</p>
             </div>
           </div>
@@ -1384,7 +1502,54 @@ export const ModelDetail = () => {
 
                 <div>
                   <label className="text-sm text-gray-600">{t('modelDetail.productType')}</label>
-                  <p className="text-sm font-medium text-gray-900">{model.product_type || '—'}</p>
+                  {editingProductType ? (
+                    <div className="mt-1 space-y-2">
+                      <select
+                        value={selectedProductType}
+                        onChange={(e) => setSelectedProductType(e.target.value)}
+                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">{t('modelDetail.productType')}</option>
+                        {productTypes.map((pt) => (
+                          <option key={pt.value} value={pt.value}>
+                            {pt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={updateProductType}
+                          className="flex-1 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                        >
+                          ✓ {t('common.save')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingProductType(false);
+                            setSelectedProductType(model.product_type || '');
+                          }}
+                          className="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        >
+                          ✕ {t('common.cancel')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">{model.product_type || '—'}</p>
+                      {isEditMode && (
+                        <button
+                          onClick={() => {
+                            setSelectedProductType(model.product_type || '');
+                            setEditingProductType(true);
+                          }}
+                          className="text-primary-600 hover:text-primary-700"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>

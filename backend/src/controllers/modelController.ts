@@ -374,6 +374,7 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
     const userRole = req.user?.role;
 
     const {
+      model_number,
       model_name,
       product_type,
       category,
@@ -432,19 +433,20 @@ export const updateModel = async (req: AuthRequest, res: Response) => {
 
     const result = await pool.query(
       `UPDATE models
-       SET model_name = COALESCE($1, model_name),
-           product_type = COALESCE($2, product_type),
-           category = COALESCE($3, category),
-           fit_type = COALESCE($4, fit_type),
-           product_group = COALESCE($5, product_group),
-           product_group_code = COALESCE($6, product_group_code),
-           status = COALESCE($7, status),
-           brand = COALESCE($8, brand),
-           prototype_number = COALESCE($9, prototype_number),
+       SET model_number = COALESCE($1, model_number),
+           model_name = COALESCE($2, model_name),
+           product_type = COALESCE($3, product_type),
+           category = COALESCE($4, category),
+           fit_type = COALESCE($5, fit_type),
+           product_group = COALESCE($6, product_group),
+           product_group_code = COALESCE($7, product_group_code),
+           status = COALESCE($8, status),
+           brand = COALESCE($9, brand),
+           prototype_number = COALESCE($10, prototype_number),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $10
+       WHERE id = $11
        RETURNING *`,
-      [model_name, product_type, category, fit_type, finalProductGroup, finalProductGroupCode, status, brand, prototype_number, id]
+      [model_number, model_name, product_type, category, fit_type, finalProductGroup, finalProductGroupCode, status, brand, prototype_number, id]
     );
 
     // Log status change and send notifications
